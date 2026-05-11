@@ -111,7 +111,7 @@ export const Home = ({
 
       <div className="homeFooter">
         <span className="homeFooterVersion">v{APP_VERSION}</span>
-        <span className="homeFooterAuthor">⭐💕❤️Created by oWo👈👉♥⭐</span>
+        <span className="homeFooterAuthor">⭐Created by 👉oWo❤️DouDou👈</span>
       </div>
     </div>
   )
