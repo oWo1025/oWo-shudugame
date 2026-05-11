@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect x="32" y="32" width="448" height="448" rx="24" fill="#F8F9FA" stroke="#212529" stroke-width="24" />
+  <path d="M192 56v400M320 56v400M56 192h400M56 320h400" stroke="#212529" stroke-width="20" />
+  <text x="256" y="312" font-size="184" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle" fill="#212529">5</text>
+</svg>

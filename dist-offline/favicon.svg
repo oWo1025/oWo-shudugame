@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+  <rect x="2" y="2" width="44" height="44" rx="4" fill="#F8F9FA" stroke="#212529" stroke-width="2" />
+  <path d="M16 4v40M32 4v40M4 16h40M4 32h40" stroke="#212529" stroke-width="2" />
+  <text x="24" y="29" font-size="18" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle" fill="#212529">5</text>
+</svg>
