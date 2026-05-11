@@ -569,6 +569,13 @@ body[data-mode='dark'][data-theme='slate'] {
   background: var(--select-strong);
   transform: translateY(0);
   box-shadow: var(--shadow-sm);
+  animation: btnTap 100ms ease;
+}
+
+@keyframes btnTap {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.92); }
+  100% { transform: scale(1); }
 }
 
 .padBtn[data-active='true'] {
@@ -707,6 +714,28 @@ body[data-mode='dark'] .modalOverlay {
   animation: cellPop 200ms ease;
 }
 
+.cellJustSet {
+  animation: cellPop 200ms ease;
+}
+
+.cellJustSet .value {
+  animation: cellPop 200ms ease;
+}
+
+@keyframes cellError {
+  0% { background: transparent; }
+  30% { background: color-mix(in srgb, var(--bad) 30%, transparent); }
+  100% { background: transparent; }
+}
+
+.cellJustError {
+  animation: cellError 400ms ease;
+}
+
+.cellJustError .value {
+  animation: cellError 400ms ease;
+}
+
 @keyframes hintPulse {
   0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 30%, transparent); }
   50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 0%, transparent); }
@@ -797,6 +826,7 @@ body[data-mode='dark'] .diffBadgeHell { background: #f8f9fa; color: #212529; }
 
 .navBtn:active {
   background: var(--select);
+  animation: btnTap 100ms ease;
 }
 
 .pauseBtn {
@@ -819,6 +849,7 @@ body[data-mode='dark'] .diffBadgeHell { background: #f8f9fa; color: #212529; }
   font-size: 13px;
   padding: 10px 8px;
   font-weight: 500;
+  animation: btnTap 100ms ease;
 }
 
 .actionActive {

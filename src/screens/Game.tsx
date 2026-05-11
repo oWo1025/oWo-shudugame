@@ -1,4 +1,4 @@
-import { useMemo, useRef, type TouchEvent } from 'react'
+import { useMemo, useRef, useState, useEffect, type TouchEvent } from 'react'
 import type { Settings } from '../types'
 import type { GameRuntime } from '../game/game'
 import { candidatesMask, maskToDigits, rowOf, colOf, boxOf } from '../sudoku/grid'
@@ -108,6 +108,30 @@ export const GameScreen = ({
 
   const padAlign = settings.keyboardSide === 'left' ? 'flex-start' : 'flex-end'
 
+  const prevEntries = useRef<Uint8Array>(game.entries)
+  const [popCell, setPopCell] = useState<number>(-1)
+  const [errorCell, setErrorCell] = useState<number>(-1)
+
+  useEffect(() => {
+    for (let i = 0; i < 81; i++) {
+      if (game.entries[i] !== prevEntries.current[i]) {
+        const wasCorrect = game.entries[i] === game.solution[i]
+        const wasEmpty = prevEntries.current[i] === 0
+        if (wasEmpty && game.entries[i] !== 0) {
+          setPopCell(i)
+          if (!wasCorrect) setErrorCell(i)
+          setTimeout(() => setPopCell(-1), 200)
+          if (!wasCorrect) setTimeout(() => setErrorCell(-1), 400)
+        }
+        break
+      }
+    }
+    prevEntries.current = game.entries
+  }, [game.entries, game.solution])
+
+  const isJustSet = (pos: number) => popCell === pos
+  const isJustError = (pos: number) => errorCell === pos
+
   return (
     <div className="app">
       <div className="topbar">
@@ -159,7 +183,7 @@ export const GameScreen = ({
               <button
                 key={pos}
                 type="button"
-                className={`cell${hint ? ' cellHintPulse' : ''}${wrongGlobal ? ' cellCheckFlash' : ''}`}
+                className={`cell${hint ? ' cellHintPulse' : ''}${wrongGlobal ? ' cellCheckFlash' : ''}${isJustSet(pos) ? ' cellJustSet' : ''}${isJustError(pos) ? ' cellJustError' : ''}`}
                 data-by={r}
                 data-bx={c}
                 data-selected={selected ? 'true' : 'false'}
