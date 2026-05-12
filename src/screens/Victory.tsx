@@ -89,7 +89,7 @@ export const VictoryScreen = ({
   const btnClick = useCallback(() => playSound(soundOn, 'click'), [soundOn])
 
   const handleShare = async () => {
-    const text = `🏆 数独完成！难度：${difficultyLabel(difficulty)} | 用时：${fmtTime(elapsedMs)} | 错误：${wrongCount} | 提示：${hintCount} www.example.com`
+    const text = `🏆 数独完成！难度：${difficultyLabel(difficulty)} | 用时：${fmtTime(elapsedMs)} | 错误：${wrongCount} | 提示：${hintCount} https://owogame.netlify.app`
     if (navigator.share) {
       try {
         await navigator.share({ title: '数独完成', text, url: 'https://owogame.netlify.app' })
@@ -134,7 +134,7 @@ export const VictoryScreen = ({
 
         <h1 className="victoryTitle">恭喜完成!</h1>
         <p className="victorySubtitle">你成功破解了谜题</p>
-        <p className="victoryUrl">www.example.com</p>
+        <p className="victoryUrl">https://owogame.netlify.app</p>
 
         <div className="victoryStats">
           <div className="victoryStat">

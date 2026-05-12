@@ -1,20 +1,29 @@
 type SoundName = 'place' | 'erase' | 'note' | 'error' | 'hint' | 'complete' | 'undo' | 'check' | 'toggle' | 'groupComplete' | 'hover' | 'click'
 
 let ctx: AudioContext | null = null
-let resuming = false
+let resumePromise: Promise<void> | null = null
 
-const ensureCtx = async (): Promise<AudioContext | null> => {
+const ensureCtx = (): Promise<AudioContext | null> => {
   try {
-    if (!ctx) ctx = new AudioContext()
-    if (ctx.state === 'suspended' && !resuming) {
-      resuming = true
-      await ctx.resume()
-      resuming = false
+    if (!ctx) {
+      ctx = new AudioContext()
     }
-    if (ctx.state === 'running') return ctx
-    return null
+    if (ctx.state === 'running') return Promise.resolve(ctx)
+
+    if (!resumePromise) {
+      resumePromise = ctx.resume().then(() => {
+        resumePromise = null
+      }).catch(() => {
+        resumePromise = null
+      })
+    }
+
+    return resumePromise.then(() => {
+      if (ctx && ctx.state === 'running') return ctx
+      return null
+    })
   } catch {
-    return null
+    return Promise.resolve(null)
   }
 }
 
@@ -32,6 +41,28 @@ const playTone = async (freq: number, duration: number, type: OscillatorType = '
   gain.connect(c.destination)
   osc.start(t)
   osc.stop(t + duration)
+}
+
+const warmUp = () => {
+  if (!ctx) {
+    try {
+      ctx = new AudioContext()
+    } catch {
+      return
+    }
+  }
+  if (ctx.state === 'suspended') {
+    ctx.resume().catch(() => {})
+  }
+}
+
+if (typeof document !== 'undefined') {
+  const events = ['click', 'touchstart', 'touchend', 'keydown'] as const
+  const handler = () => {
+    warmUp()
+    events.forEach((e) => document.removeEventListener(e, handler))
+  }
+  events.forEach((e) => document.addEventListener(e, handler, { passive: true }))
 }
 
 const sounds: Record<SoundName, () => Promise<void>> = {
