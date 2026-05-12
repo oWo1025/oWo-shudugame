@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { Difficulty } from '../types'
 import { Button } from '../ui'
 import { APP_VERSION } from '../version'
@@ -43,6 +44,13 @@ export const Home = ({
   onStats: () => void
   onSettings: () => void
 }) => {
+  const [logoClicked, setLogoClicked] = useState(false)
+
+  const onLogoClick = () => {
+    setLogoClicked(true)
+    window.setTimeout(() => setLogoClicked(false), 600)
+  }
+
   const diffs: Array<{ d: Difficulty; label: string }> = [
     { d: 'beginner', label: '新手' },
     { d: 'easy', label: '简单' },
@@ -54,8 +62,8 @@ export const Home = ({
 
   return (
     <div className="app" role="application">
-      <div className="homeLogo">
-        <div className="homeLogoGrid">
+      <div className="homeLogo" style={{ cursor: 'pointer' }} onClick={onLogoClick}>
+        <div className={`homeLogoGrid${logoClicked ? ' homeLogoGridClicked' : ''}`}>
           {homeLogoDigits.map((d, i) => (
             <div key={i} className="homeLogoCell">{d}</div>
           ))}

@@ -270,6 +270,17 @@ body[data-mode='dark'][data-theme='slate'] {
   }
 }
 
+.homeLogoGridClicked {
+  animation: logoClickSpin 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes logoClickSpin {
+  0% { transform: scale(1) rotate(0deg); }
+  30% { transform: scale(0.9) rotate(-10deg); }
+  60% { transform: scale(1.1) rotate(5deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
 .muted {
   color: var(--muted);
   font-size: 13px;
@@ -868,6 +879,16 @@ body[data-mode='dark'] .diffBadgeHell { background: #f8f9fa; color: #212529; }
   animation: checkFlash 1.2s ease 2;
 }
 
+@keyframes completedFlash {
+  0% { background: transparent; }
+  30% { background: color-mix(in srgb, var(--ok) 30%, transparent); }
+  100% { background: transparent; }
+}
+
+.cellCompletedFlash {
+  animation: completedFlash 1.5s ease;
+}
+
 @media (max-width: 400px) {
   .app {
     padding: 12px 10px 24px;
@@ -1032,6 +1053,14 @@ body[data-mode='dark'] .diffBadgeHell { background: #f8f9fa; color: #212529; }
   animation: titleAppear 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.4s both;
 }
 
+.victoryUrl {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 0 0 10px;
+  letter-spacing: 0.3px;
+  font-family: var(--mono);
+}
+
 .victoryStats {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -1177,6 +1206,16 @@ body[data-mode='dark'] .diffBadgeHell { background: #f8f9fa; color: #212529; }
   gap: 10px;
   animation: titleAppear 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.7s both;
   padding-bottom: 20px;
+}
+
+.victoryShare {
+  margin-bottom: 12px;
+  animation: titleAppear 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.68s both;
+}
+
+.victoryShare .btn {
+  font-size: 14px;
+  gap: 6px;
 }
 
 .victoryActions .btn {

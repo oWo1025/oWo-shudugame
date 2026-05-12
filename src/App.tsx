@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Difficulty, Settings, Stats } from './types'
 import { applyAchievements } from './achievements'
 import { defaultSettings, defaultStats } from './defaults'
@@ -7,7 +7,7 @@ import { applyTheme, onSystemThemeChange, resolveMode } from './theme'
 import { createPuzzle, makeGameId } from './puzzles/puzzles'
 import { createNewGame, fromSnapshot, incrementHint, inputDigit, isComplete, toSnapshot, undo, redo, toggleNoteMode, clearCell, wrongMask, type GameRuntime } from './game/game'
 import { findHiddenSingleHint, findNakedSingles } from './sudoku/hints'
-import { candidatesMask } from './sudoku/grid'
+import { candidatesMask, rowOf, colOf, boxOf, idx } from './sudoku/grid'
 import { Home } from './screens/Home'
 import { SettingsScreen } from './screens/Settings'
 import { StatsScreen } from './screens/Stats'
@@ -42,6 +42,8 @@ export default function App() {
   const [hintOpen, setHintOpen] = useState(false)
   const [hintMaskState, setHintMaskState] = useState<Uint8Array | null>(null)
   const [checkMaskState, setCheckMaskState] = useState<Uint8Array | null>(null)
+  const [completedHighlightState, setCompletedHighlightState] = useState<Uint8Array | null>(null)
+  const lastInputPos = useRef<number>(-1)
   const [victoryData, setVictoryData] = useState<{
     difficulty: Difficulty
     elapsedMs: number
@@ -133,6 +135,53 @@ export default function App() {
     })
   }
 
+  const checkCompletedGroups = (entries: Uint8Array, solution: Uint8Array, pos: number) => {
+    const mask = new Uint8Array(81)
+    let found = false
+    const r = rowOf(pos)
+    for (let c = 0; c < 9; c++) {
+      const p = idx(r, c)
+      if (entries[p] === 0 || entries[p] !== solution[p]) { found = false; break }
+      found = true
+    }
+    if (found) {
+      for (let c = 0; c < 9; c++) mask[idx(r, c)] = 1
+    }
+    const c = colOf(pos)
+    found = false
+    for (let rr = 0; rr < 9; rr++) {
+      const p = idx(rr, c)
+      if (entries[p] === 0 || entries[p] !== solution[p]) { found = false; break }
+      found = true
+    }
+    if (found) {
+      for (let rr = 0; rr < 9; rr++) mask[idx(rr, c)] = 1
+    }
+    const b = boxOf(pos)
+    const br = ((b / 3) | 0) * 3
+    const bc = (b % 3) * 3
+    found = false
+    for (let rr = 0; rr < 3; rr++) {
+      for (let cc = 0; cc < 3; cc++) {
+        const p = idx(br + rr, bc + cc)
+        if (entries[p] === 0 || entries[p] !== solution[p]) { found = false; break }
+        found = true
+      }
+      if (!found) break
+    }
+    if (found) {
+      for (let rr = 0; rr < 3; rr++) {
+        for (let cc = 0; cc < 3; cc++) mask[idx(br + rr, bc + cc)] = 1
+      }
+    }
+    let any = false
+    for (let i = 0; i < 81; i++) { if (mask[i]) { any = true; break } }
+    if (!any) return
+    setCompletedHighlightState(mask)
+    playSound(settings.sound, 'groupComplete')
+    window.setTimeout(() => setCompletedHighlightState(null), 1500)
+  }
+
   const onSelect = (pos: number) => {
     updateGame((g) => {
       g.selected = pos
@@ -147,6 +196,7 @@ export default function App() {
           } else {
             playSound(settings.sound, wasNote ? 'note' : 'place')
           }
+          if (!wasNote) lastInputPos.current = pos
         }
         vibrate(settings.vibration)
       }
@@ -176,6 +226,7 @@ export default function App() {
         } else {
           playSound(settings.sound, wasNote ? 'note' : 'place')
         }
+        if (!wasNote) lastInputPos.current = g.selected
         vibrate(settings.vibration)
       }
     })
@@ -486,6 +537,17 @@ export default function App() {
     onComplete()
   }, [game?.entries, screen, paused])
 
+  useEffect(() => {
+    if (!game) return
+    if (screen !== 'game') return
+    if (paused) return
+    const pos = lastInputPos.current
+    if (pos < 0) return
+    lastInputPos.current = -1
+    if (game.entries[pos] === 0) return
+    checkCompletedGroups(game.entries, game.solution, pos)
+  }, [game?.entries, screen, paused])
+
   const resolvedMode = useMemo(() => resolveMode(settings.mode), [settings.mode])
 
   useEffect(() => {
@@ -600,6 +662,7 @@ export default function App() {
         paused={paused}
         highlight={hintMaskState}
         globalWrong={checkMaskState}
+        completedHighlight={completedHighlightState}
         onLongPressCell={onLongPressCell}
         onCleanNotes={onCleanNotes}
         onCheckErrors={() => {

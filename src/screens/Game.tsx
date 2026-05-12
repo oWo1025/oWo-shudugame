@@ -18,6 +18,7 @@ export const GameScreen = ({
   paused,
   highlight,
   globalWrong,
+  completedHighlight,
   onLongPressCell,
   onCleanNotes,
   onCheckErrors,
@@ -35,6 +36,7 @@ export const GameScreen = ({
   paused: boolean
   highlight: Uint8Array | null
   globalWrong: Uint8Array | null
+  completedHighlight: Uint8Array | null
   onLongPressCell: (pos: number) => void
   onCleanNotes: () => void
   onCheckErrors: () => void
@@ -183,7 +185,7 @@ export const GameScreen = ({
               <button
                 key={pos}
                 type="button"
-                className={`cell${hint ? ' cellHintPulse' : ''}${wrongGlobal ? ' cellCheckFlash' : ''}${isJustSet(pos) ? ' cellJustSet' : ''}${isJustError(pos) ? ' cellJustError' : ''}`}
+                className={`cell${hint ? ' cellHintPulse' : ''}${wrongGlobal ? ' cellCheckFlash' : ''}${isJustSet(pos) ? ' cellJustSet' : ''}${isJustError(pos) ? ' cellJustError' : ''}${completedHighlight?.[pos] === 1 ? ' cellCompletedFlash' : ''}`}
                 data-by={r}
                 data-bx={c}
                 data-selected={selected ? 'true' : 'false'}

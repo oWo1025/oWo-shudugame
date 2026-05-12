@@ -1,4 +1,4 @@
-type SoundName = 'place' | 'erase' | 'note' | 'error' | 'hint' | 'complete' | 'undo' | 'check' | 'toggle'
+type SoundName = 'place' | 'erase' | 'note' | 'error' | 'hint' | 'complete' | 'undo' | 'check' | 'toggle' | 'groupComplete'
 
 let ctx: AudioContext | null = null
 let resuming = false
@@ -79,6 +79,12 @@ const sounds: Record<SoundName, () => Promise<void>> = {
 
   async toggle() {
     await playTone(550, 0.05, 'sine', 0.08)
+  },
+
+  async groupComplete() {
+    await playTone(660, 0.1, 'sine', 0.1)
+    await playTone(880, 0.1, 'sine', 0.1, 0.08)
+    await playTone(1100, 0.15, 'sine', 0.08, 0.16)
   },
 }
 
