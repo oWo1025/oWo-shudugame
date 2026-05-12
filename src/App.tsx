@@ -13,10 +13,11 @@ import { SettingsScreen } from './screens/Settings'
 import { StatsScreen } from './screens/Stats'
 import { GameScreen } from './screens/Game'
 import { VictoryScreen } from './screens/Victory'
+import { ChangelogScreen } from './screens/Changelog'
 import { Button, Modal, useToast } from './ui'
 import { playSound } from './sound'
 
-type Screen = 'home' | 'game' | 'stats' | 'settings' | 'victory'
+type Screen = 'home' | 'game' | 'stats' | 'settings' | 'victory' | 'changelog'
 type SettingsBack = 'home' | 'game' | 'pause'
 
 const today = () => new Date().toISOString().slice(0, 10)
@@ -614,6 +615,7 @@ export default function App() {
             showToast('已重置')
             setScreen('home')
           }}
+          onChangelog={() => setScreen('changelog')}
         />
         {toast}
       </>
@@ -624,6 +626,18 @@ export default function App() {
     return (
       <>
         <StatsScreen value={stats} onBack={() => setScreen('home')} />
+        {toast}
+      </>
+    )
+  }
+
+  if (screen === 'changelog') {
+    return (
+      <>
+        <ChangelogScreen
+          soundOn={settings.sound}
+          onBack={() => setScreen('settings')}
+        />
         {toast}
       </>
     )

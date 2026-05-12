@@ -7,11 +7,13 @@ export const SettingsScreen = ({
   onChange,
   onBack,
   onResetAll,
+  onChangelog,
 }: {
   value: Settings
   onChange: (next: Settings) => void
   onBack: () => void
   onResetAll: () => void
+  onChangelog: () => void
 }) => {
   const set = <K extends keyof Settings>(k: K, v: Settings[K]) => onChange({ ...value, [k]: v })
 
@@ -104,6 +106,10 @@ export const SettingsScreen = ({
           <Toggle label="云同步" value={value.cloudSync} onChange={(v) => set('cloudSync', v)} />
         </div>
       </div>
+
+      <Button wide onClick={() => { btnClick(); onChangelog() }}>
+        更新内容
+      </Button>
 
       <Button wide onClick={() => { btnClick(); onResetAll() }}>
         本地数据重置

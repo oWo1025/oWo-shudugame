@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import legacy from '@vitejs/plugin-legacy'
 import { VitePWA } from 'vite-plugin-pwa'
 import pkg from './package.json'
+import changelogPlugin from './vite-plugin-changelog'
 
 export default defineConfig({
   base: './',
@@ -10,6 +11,7 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
   plugins: [
+    changelogPlugin(),
     react(),
     legacy({
       targets: ['defaults', 'not IE 11'],
