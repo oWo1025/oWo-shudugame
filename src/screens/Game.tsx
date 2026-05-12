@@ -1,9 +1,10 @@
-import { useMemo, useRef, useState, useEffect, type TouchEvent } from 'react'
+import { useMemo, useRef, useState, useEffect, useCallback, type TouchEvent } from 'react'
 import type { Settings } from '../types'
 import type { GameRuntime } from '../game/game'
 import { candidatesMask, maskToDigits, rowOf, colOf, boxOf } from '../sudoku/grid'
 import { difficultyLabel } from '../achievements'
 import { IconEraser, IconHint, IconPencil, IconUndo } from '../icons'
+import { playSound } from '../sound'
 
 const fmtTime = (ms: number) => {
   const sec = Math.max(0, Math.floor(ms / 1000))
@@ -55,6 +56,9 @@ export const GameScreen = ({
   }, [game.selected])
 
   const activeDigit = settings.inputMode === 'numberFirst' ? game.selectedDigit : 0
+  const soundOn = settings.sound
+
+  const btnClick = useCallback(() => playSound(soundOn, 'click'), [soundOn])
 
   const pressTimer = useRef<number | null>(null)
   const pressPos = useRef<number>(-1)
@@ -142,7 +146,7 @@ export const GameScreen = ({
           {fmtTime(game.elapsedMs)}
         </div>
         <div style={{ textAlign: 'right' }}>
-          <button type="button" className="btn pauseBtn" onClick={onPause}>
+          <button type="button" className="btn pauseBtn" onClick={() => { btnClick(); onPause() }}>
             暂停
           </button>
         </div>
@@ -237,7 +241,7 @@ export const GameScreen = ({
                     type="button"
                     className="padBtn"
                     data-active={active ? 'true' : 'false'}
-                    onClick={() => onInputDigit(d)}
+                    onClick={() => { btnClick(); onInputDigit(d) }}
                   >
                     {d}
                   </button>
@@ -250,6 +254,7 @@ export const GameScreen = ({
                 className={`btn${game.noteMode ? ' actionActive' : ''}`}
                 onClick={() => {
                   if (noteLongPress.current) return
+                  btnClick()
                   onToggleNote()
                 }}
                 onPointerDown={() => {
@@ -268,7 +273,7 @@ export const GameScreen = ({
                 <IconPencil />
                 {game.noteMode ? '笔记✓' : '笔记'}
               </button>
-              <button type="button" className="btn" onClick={onErase}>
+              <button type="button" className="btn" onClick={() => { btnClick(); onErase() }}>
                 <IconEraser />
                 擦除
               </button>
@@ -277,6 +282,7 @@ export const GameScreen = ({
                 className="btn"
                 onClick={() => {
                   if (hintLongPress.current) return
+                  btnClick()
                   onHint()
                 }}
                 onPointerDown={() => {
@@ -295,7 +301,7 @@ export const GameScreen = ({
                 <IconHint />
                 提示
               </button>
-              <button type="button" className="btn" onClick={onUndo}>
+              <button type="button" className="btn" onClick={() => { btnClick(); onUndo() }}>
                 <IconUndo />
                 撤销
               </button>

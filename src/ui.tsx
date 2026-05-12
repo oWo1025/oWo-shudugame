@@ -5,17 +5,22 @@ export const Button = ({
   onClick,
   disabled,
   wide,
+  onHover,
+  onClickSound,
 }: {
   children: React.ReactNode
   onClick?: () => void
   disabled?: boolean
   wide?: boolean
+  onHover?: () => void
+  onClickSound?: () => void
 }) => (
   <button
     type="button"
     className={`btn${wide ? ' btnWide' : ''}`}
-    onClick={onClick}
+    onClick={() => { onClickSound?.(); onClick?.() }}
     disabled={disabled}
+    onMouseEnter={onHover}
   >
     {children}
   </button>

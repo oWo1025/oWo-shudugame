@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import type { Difficulty } from '../types'
 import { Button } from '../ui'
 import { APP_VERSION } from '../version'
+import { playSound } from '../sound'
 
 const diffBadgeClass = (d: Difficulty) => {
   const map: Record<Difficulty, string> = {
@@ -36,6 +37,7 @@ export const Home = ({
   onDaily,
   onStats,
   onSettings,
+  soundOn,
 }: {
   canContinue: boolean
   onContinue: () => void
@@ -43,10 +45,15 @@ export const Home = ({
   onDaily: (d: Difficulty) => void
   onStats: () => void
   onSettings: () => void
+  soundOn: boolean
 }) => {
   const [logoClicked, setLogoClicked] = useState(false)
 
+  const onHover = useCallback(() => playSound(soundOn, 'hover'), [soundOn])
+  const onClick = useCallback(() => playSound(soundOn, 'click'), [soundOn])
+
   const onLogoClick = () => {
+    playSound(soundOn, 'click')
     setLogoClicked(true)
     window.setTimeout(() => setLogoClicked(false), 600)
   }
@@ -73,7 +80,7 @@ export const Home = ({
       <div className="homeSubtitle">随时随地，挑战你的逻辑思维</div>
 
       <div className="btnRow">
-        <Button wide disabled={!canContinue} onClick={onContinue}>
+        <Button wide disabled={!canContinue} onClick={onContinue} onHover={onHover} onClickSound={onClick}>
           继续游戏
         </Button>
 
@@ -83,7 +90,7 @@ export const Home = ({
           </div>
           <div className="btnRow">
             {diffs.map((x) => (
-              <button key={x.d} type="button" className="diffBtn" onClick={() => onNewGame(x.d)}>
+              <button key={x.d} type="button" className="diffBtn" onClick={() => { onClick(); onNewGame(x.d) }} onMouseEnter={onHover}>
                 <span>{x.label}</span>
                 <span className={diffBadgeClass(x.d)}>
                   {'★'.repeat(diffStars(x.d))}
@@ -99,7 +106,7 @@ export const Home = ({
           </div>
           <div className="btnRow">
             {diffs.map((x) => (
-              <button key={x.d} type="button" className="diffBtn" onClick={() => onDaily(x.d)}>
+              <button key={x.d} type="button" className="diffBtn" onClick={() => { onClick(); onDaily(x.d) }} onMouseEnter={onHover}>
                 <span>{x.label}</span>
                 <span className={diffBadgeClass(x.d)}>
                   {'★'.repeat(diffStars(x.d))}
@@ -109,10 +116,10 @@ export const Home = ({
           </div>
         </div>
 
-        <Button wide onClick={onStats}>
+        <Button wide onClick={onStats} onHover={onHover} onClickSound={onClick}>
           统计数据
         </Button>
-        <Button wide onClick={onSettings}>
+        <Button wide onClick={onSettings} onHover={onHover} onClickSound={onClick}>
           设置
         </Button>
       </div>

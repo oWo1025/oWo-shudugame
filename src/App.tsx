@@ -439,9 +439,11 @@ export default function App() {
 
   const renderHintModal = () => {
     if (!hintOpen) return null
+    const btnClick = () => playSound(settings.sound, 'click')
     return (
       <Modal
         onClose={() => {
+          btnClick()
           setHintOpen(false)
         }}
       >
@@ -449,6 +451,7 @@ export default function App() {
         <Button
           wide
           onClick={() => {
+            btnClick()
             setHintOpen(false)
             doHint1()
           }}
@@ -458,6 +461,7 @@ export default function App() {
         <Button
           wide
           onClick={() => {
+            btnClick()
             setHintOpen(false)
             doHint2()
           }}
@@ -467,6 +471,7 @@ export default function App() {
         <Button
           wide
           onClick={() => {
+            btnClick()
             setHintOpen(false)
             doHint3()
           }}
@@ -479,9 +484,11 @@ export default function App() {
 
   const renderPauseModal = () => {
     if (!pauseOpen) return null
+    const btnClick = () => playSound(settings.sound, 'click')
     return (
       <Modal
         onClose={() => {
+          btnClick()
           setPauseOpen(false)
           setPaused(false)
         }}
@@ -489,6 +496,7 @@ export default function App() {
         <Button
           wide
           onClick={() => {
+            btnClick()
             setPauseOpen(false)
             setPaused(false)
           }}
@@ -498,6 +506,7 @@ export default function App() {
         <Button
           wide
           onClick={() => {
+            btnClick()
             if (!game) return
             startGame(game.id.difficulty, game.id.kind)
           }}
@@ -507,6 +516,7 @@ export default function App() {
         <Button
           wide
           onClick={() => {
+            btnClick()
             setPauseOpen(false)
             setPaused(false)
             setScreen('home')
@@ -517,6 +527,7 @@ export default function App() {
         <Button
           wide
           onClick={() => {
+            btnClick()
             setPauseOpen(false)
             setSettingsBack('pause')
             setScreen('settings')
@@ -569,6 +580,7 @@ export default function App() {
             setSettingsBack('home')
             setScreen('settings')
           }}
+          soundOn={settings.sound}
         />
         {toast}
       </>
@@ -629,6 +641,7 @@ export default function App() {
           given={victoryData.given}
           onReplay={onVictoryReplay}
           onHome={onVictoryHome}
+          soundOn={settings.sound}
         />
         {toast}
       </>
@@ -648,6 +661,7 @@ export default function App() {
             setSettingsBack('home')
             setScreen('settings')
           }}
+          soundOn={settings.sound}
         />
         {toast}
       </>

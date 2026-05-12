@@ -1,5 +1,6 @@
 import type { KeyboardSide, Mode, Settings, Theme, InputMode } from '../types'
 import { Button, Segmented, Toggle } from '../ui'
+import { playSound } from '../sound'
 
 export const SettingsScreen = ({
   value,
@@ -13,6 +14,8 @@ export const SettingsScreen = ({
   onResetAll: () => void
 }) => {
   const set = <K extends keyof Settings>(k: K, v: Settings[K]) => onChange({ ...value, [k]: v })
+
+  const btnClick = () => playSound(value.sound, 'click')
 
   const modeOptions: Array<{ value: Mode; label: string }> = [
     { value: 'system', label: '系统' },
@@ -40,7 +43,7 @@ export const SettingsScreen = ({
   return (
     <div className="app">
       <div className="topbar">
-        <Button onClick={onBack}>返回</Button>
+        <Button onClick={() => { btnClick(); onBack() }}>返回</Button>
         <div className="title">设置</div>
         <div />
       </div>
@@ -102,7 +105,7 @@ export const SettingsScreen = ({
         </div>
       </div>
 
-      <Button wide onClick={onResetAll}>
+      <Button wide onClick={() => { btnClick(); onResetAll() }}>
         本地数据重置
       </Button>
     </div>

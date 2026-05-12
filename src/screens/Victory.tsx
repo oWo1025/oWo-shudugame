@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useCallback } from 'react'
 import type { Difficulty } from '../types'
 import { difficultyLabel } from '../achievements'
 import { rowOf, colOf } from '../sudoku/grid'
+import { playSound } from '../sound'
 
 const fmtTime = (ms: number) => {
   const sec = Math.max(0, Math.floor(ms / 1000))
@@ -70,6 +71,7 @@ export const VictoryScreen = ({
   given,
   onReplay,
   onHome,
+  soundOn,
 }: {
   difficulty: Difficulty
   elapsedMs: number
@@ -79,15 +81,18 @@ export const VictoryScreen = ({
   given?: Uint8Array
   onReplay: () => void
   onHome: () => void
+  soundOn: boolean
 }) => {
   const confettiPieces = useMemo(() => generateConfetti(50), [])
   const [copied, setCopied] = useState(false)
+
+  const btnClick = useCallback(() => playSound(soundOn, 'click'), [soundOn])
 
   const handleShare = async () => {
     const text = `🏆 数独完成！难度：${difficultyLabel(difficulty)} | 用时：${fmtTime(elapsedMs)} | 错误：${wrongCount} | 提示：${hintCount} www.example.com`
     if (navigator.share) {
       try {
-        await navigator.share({ title: '数独完成', text, url: 'https://www.example.com' })
+        await navigator.share({ title: '数独完成', text, url: 'https://owogame.netlify.app' })
       } catch {}
     } else {
       try {
@@ -167,16 +172,16 @@ export const VictoryScreen = ({
         )}
 
         <div className="victoryShare">
-          <button type="button" className="btn btnWide" onClick={handleShare}>
+          <button type="button" className="btn btnWide" onClick={() => { btnClick(); handleShare() }}>
             📤 {copied ? '已复制' : '分享成绩'}
           </button>
         </div>
 
         <div className="victoryActions">
-          <button type="button" className="btn btnWide btnPrimary" onClick={onReplay}>
+          <button type="button" className="btn btnWide btnPrimary" onClick={() => { btnClick(); onReplay() }}>
             再来一局
           </button>
-          <button type="button" className="btn btnWide" onClick={onHome}>
+          <button type="button" className="btn btnWide" onClick={() => { btnClick(); onHome() }}>
             返回主页
           </button>
         </div>

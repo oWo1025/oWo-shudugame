@@ -1,6 +1,7 @@
 import type { Stats } from '../types'
 import { difficultyLabel } from '../achievements'
 import { Button, ProgressBar } from '../ui'
+import { playSound } from '../sound'
 
 const fmtTime = (sec: number) => {
   const s = Math.max(0, sec | 0)
@@ -20,6 +21,7 @@ const fmtTimeShort = (sec: number) => {
 export const StatsScreen = ({ value, onBack }: { value: Stats; onBack: () => void }) => {
   const total = Math.max(1, value.totalCompleted)
   const diffs = ['beginner', 'easy', 'medium', 'hard', 'expert', 'hell'] as const
+  const btnClick = () => playSound(true, 'click')
 
   const achievements: Array<{ key: string; name: string; desc: string; done: boolean }> = [
     { key: 'intro10', name: '入门玩家', desc: '完成10局新手难度', done: !!value.achievements['intro10'] },
@@ -34,7 +36,7 @@ export const StatsScreen = ({ value, onBack }: { value: Stats; onBack: () => voi
   return (
     <div className="app">
       <div className="topbar">
-        <Button onClick={onBack}>返回</Button>
+        <Button onClick={() => { btnClick(); onBack() }}>返回</Button>
         <div className="title">统计</div>
         <div />
       </div>
