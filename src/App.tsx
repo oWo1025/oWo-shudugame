@@ -12,10 +12,11 @@ import { Home } from './screens/Home'
 import { SettingsScreen } from './screens/Settings'
 import { StatsScreen } from './screens/Stats'
 import { GameScreen } from './screens/Game'
+import { VictoryScreen } from './screens/Victory'
 import { Button, Modal, useToast } from './ui'
 import { playSound } from './sound'
 
-type Screen = 'home' | 'game' | 'stats' | 'settings'
+type Screen = 'home' | 'game' | 'stats' | 'settings' | 'victory'
 type SettingsBack = 'home' | 'game' | 'pause'
 
 const today = () => new Date().toISOString().slice(0, 10)
@@ -41,6 +42,14 @@ export default function App() {
   const [hintOpen, setHintOpen] = useState(false)
   const [hintMaskState, setHintMaskState] = useState<Uint8Array | null>(null)
   const [checkMaskState, setCheckMaskState] = useState<Uint8Array | null>(null)
+  const [victoryData, setVictoryData] = useState<{
+    difficulty: Difficulty
+    elapsedMs: number
+    wrongCount: number
+    hintCount: number
+    entries: Uint8Array
+    given: Uint8Array
+  } | null>(null)
 
   const { toast, showToast } = useToast()
 
@@ -346,10 +355,34 @@ export default function App() {
       applyAchievements(next)
       return next
     })
+    setVictoryData({
+      difficulty: game.id.difficulty,
+      elapsedMs: game.elapsedMs,
+      wrongCount: game.wrongCount,
+      hintCount: game.hintCount,
+      entries: new Uint8Array(game.entries),
+      given: new Uint8Array(game.given),
+    })
     clearGame()
     setGame(null)
     playSound(settings.sound, 'complete')
-    showToast('完成')
+    setScreen('victory')
+  }
+
+  const onVictoryReplay = () => {
+    if (!victoryData) return
+    setVictoryData(null)
+    setPaused(false)
+    setPauseOpen(false)
+    const id = makeGameId(game?.id.kind ?? 'normal', victoryData.difficulty, undefined)
+    const { puzzle, solution } = createPuzzle(id)
+    const g = createNewGame(id, puzzle, solution)
+    setGame(g)
+    setScreen('game')
+  }
+
+  const onVictoryHome = () => {
+    setVictoryData(null)
     setScreen('home')
   }
 
@@ -517,6 +550,24 @@ export default function App() {
     return (
       <>
         <StatsScreen value={stats} onBack={() => setScreen('home')} />
+        {toast}
+      </>
+    )
+  }
+
+  if (screen === 'victory' && victoryData) {
+    return (
+      <>
+        <VictoryScreen
+          difficulty={victoryData.difficulty}
+          elapsedMs={victoryData.elapsedMs}
+          wrongCount={victoryData.wrongCount}
+          hintCount={victoryData.hintCount}
+          entries={victoryData.entries}
+          given={victoryData.given}
+          onReplay={onVictoryReplay}
+          onHome={onVictoryHome}
+        />
         {toast}
       </>
     )
