@@ -4,6 +4,7 @@ import legacy from '@vitejs/plugin-legacy'
 import { VitePWA } from 'vite-plugin-pwa'
 import { viteSingleFile } from 'vite-plugin-singlefile'
 import pkg from './package.json'
+import changelogPlugin from './vite-plugin-changelog'
 
 export default defineConfig({
   base: './',
@@ -14,6 +15,7 @@ export default defineConfig({
     outDir: 'dist-offline',
   },
   plugins: [
+    changelogPlugin(),
     react(),
     legacy({
       targets: ['defaults', 'not IE 11'],
