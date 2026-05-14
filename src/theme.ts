@@ -18,3 +18,25 @@ export const onSystemThemeChange = (cb: () => void) => {
   mql.addEventListener('change', handler)
   return () => mql.removeEventListener('change', handler)
 }
+
+export const themeLabel: Record<Theme, string> = {
+  classic: '经典',
+  sand: '沙',
+  sage: '苔',
+  slate: '岩',
+  ocean: '海',
+  forest: '林',
+  sunset: '暮',
+  highContrast: '高对比',
+}
+
+export const themeDescription: Record<Theme, string> = {
+  classic: '默认配色',
+  sand: '温暖沙色调',
+  sage: '清新绿植风',
+  slate: '冷峻岩石风',
+  ocean: '深邃海洋蓝',
+  forest: '自然森林绿',
+  sunset: '浪漫夕阳橙',
+  highContrast: '色弱友好',
+}

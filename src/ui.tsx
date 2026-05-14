@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import type { CSSProperties } from 'react'
 
 export const Button = ({
   children,
@@ -7,6 +8,8 @@ export const Button = ({
   wide,
   onHover,
   onClickSound,
+  className,
+  style,
 }: {
   children: React.ReactNode
   onClick?: () => void
@@ -14,13 +17,16 @@ export const Button = ({
   wide?: boolean
   onHover?: () => void
   onClickSound?: () => void
+  className?: string
+  style?: CSSProperties
 }) => (
   <button
     type="button"
-    className={`btn${wide ? ' btnWide' : ''}`}
+    className={`btn${wide ? ' btnWide' : ''}${className ? ' ' + className : ''}`}
     onClick={() => { onClickSound?.(); onClick?.() }}
     disabled={disabled}
     onMouseEnter={onHover}
+    style={style}
   >
     {children}
   </button>
@@ -112,4 +118,3 @@ export const useToast = (ms = 1200) => {
   )
   return { toast: node, showToast: setText }
 }
-

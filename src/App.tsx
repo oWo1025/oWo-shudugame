@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import type { Difficulty, Settings, Stats } from './types'
 import { applyAchievements } from './achievements'
 import { defaultSettings, defaultStats } from './defaults'
@@ -16,8 +16,10 @@ import { VictoryScreen } from './screens/Victory'
 import { ChangelogScreen } from './screens/Changelog'
 import { Button, Modal, useToast } from './ui'
 import { playSound } from './sound'
+import { syncToCloud, syncFromCloud, clearStoredAuth, getStoredAuth, isCloudConfigured } from './cloudSync'
 
 type Screen = 'home' | 'game' | 'stats' | 'settings' | 'victory' | 'changelog'
+type ScreenDirection = 'forward' | 'backward' | 'none'
 type SettingsBack = 'home' | 'game' | 'pause'
 
 const today = () => new Date().toISOString().slice(0, 10)
@@ -44,6 +46,7 @@ export default function App() {
   const [hintMaskState, setHintMaskState] = useState<Uint8Array | null>(null)
   const [checkMaskState, setCheckMaskState] = useState<Uint8Array | null>(null)
   const [completedHighlightState, setCompletedHighlightState] = useState<Uint8Array | null>(null)
+  const [transitionDir, setTransitionDir] = useState<ScreenDirection>('none')
   const lastInputPos = useRef<number>(-1)
   const [victoryData, setVictoryData] = useState<{
     difficulty: Difficulty
@@ -55,6 +58,68 @@ export default function App() {
   } | null>(null)
 
   const { toast, showToast } = useToast()
+
+  const handleSyncNow = useCallback(async () => {
+    if (!settings.cloudSync || !getStoredAuth() || !isCloudConfigured()) {
+      showToast('云同步未启用')
+      return
+    }
+    showToast('正在同步...')
+    const gameSnapshot = game ? toSnapshot(game) : null
+    const success = await syncToCloud({ settings, stats, game: gameSnapshot })
+    if (success) {
+      showToast('同步成功')
+    } else {
+      showToast('同步失败')
+    }
+  }, [settings, stats, game, showToast])
+
+  const handleDisconnectCloud = useCallback(() => {
+    clearStoredAuth()
+    setSettings((s) => ({ ...s, cloudSync: false }))
+    showToast('已断开云同步')
+  }, [showToast])
+
+  useEffect(() => {
+    if (!settings.cloudSync || !getStoredAuth() || !isCloudConfigured()) return
+    if (!game && !stats.totalCompleted) return
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        const gameSnapshot = game ? toSnapshot(game) : null
+        syncToCloud({ settings, stats, game: gameSnapshot }).catch(() => {})
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [settings, stats, game])
+
+  useEffect(() => {
+    if (!settings.cloudSync || !getStoredAuth() || !isCloudConfigured()) return
+    const initSync = async () => {
+      const cloudData = await syncFromCloud()
+      if (cloudData) {
+        if (cloudData.stats) {
+          setStats(cloudData.stats)
+        }
+        if (cloudData.game && !game) {
+          setGame(fromSnapshot(cloudData.game))
+        }
+        if (cloudData.settings) {
+          setSettings(cloudData.settings)
+        }
+        showToast('已从云端恢复数据')
+      }
+    }
+    initSync()
+  }, [settings.cloudSync])
+
+  const navigateTo = useCallback((next: Screen, dir: ScreenDirection = 'forward') => {
+    setTransitionDir(dir)
+    setTimeout(() => {
+      setScreen(next)
+      setTransitionDir('none')
+    }, 150)
+  }, [])
 
   useEffect(() => {
     applyTheme(settings.mode, settings.theme)
@@ -108,14 +173,14 @@ export default function App() {
     setGame(g)
     setPaused(false)
     setPauseOpen(false)
-    setScreen('game')
+    navigateTo('game')
   }
 
   const onContinue = () => {
     if (!game) return
     setPaused(false)
     setPauseOpen(false)
-    setScreen('game')
+    navigateTo('game')
   }
 
   const updateGame = (fn: (g: GameRuntime) => void) => {
@@ -430,12 +495,12 @@ export default function App() {
     const { puzzle, solution } = createPuzzle(id)
     const g = createNewGame(id, puzzle, solution)
     setGame(g)
-    setScreen('game')
+    navigateTo('game')
   }
 
   const onVictoryHome = () => {
     setVictoryData(null)
-    setScreen('home')
+    navigateTo('home')
   }
 
   const renderHintModal = () => {
@@ -448,36 +513,55 @@ export default function App() {
           setHintOpen(false)
         }}
       >
-        <div className="muted">提示</div>
+        <div className="hintModalHeader">
+          <span className="hintModalIcon">💡</span>
+          <span className="hintModalTitle">选择提示级别</span>
+        </div>
+        <div className="hintModalDesc">根据需要获取不同级别的帮助</div>
         <Button
           wide
+          className="hintBtn hintBtn1"
           onClick={() => {
             btnClick()
             setHintOpen(false)
             doHint1()
           }}
         >
-          一级：标注位置
+          <span className="hintBtnIcon">🔍</span>
+          <span className="hintBtnContent">
+            <span className="hintBtnTitle">标注可填位置</span>
+            <span className="hintBtnDesc">高亮显示可直接填入的空格</span>
+          </span>
         </Button>
         <Button
           wide
+          className="hintBtn hintBtn2"
           onClick={() => {
             btnClick()
             setHintOpen(false)
             doHint2()
           }}
         >
-          二级：提示技巧
+          <span className="hintBtnIcon">🧩</span>
+          <span className="hintBtnContent">
+            <span className="hintBtnTitle">技巧提示</span>
+            <span className="hintBtnDesc">显示可用的解题技巧和方法</span>
+          </span>
         </Button>
         <Button
           wide
+          className="hintBtn hintBtn3"
           onClick={() => {
             btnClick()
             setHintOpen(false)
             doHint3()
           }}
         >
-          三级：精准填数
+          <span className="hintBtnIcon">🎯</span>
+          <span className="hintBtnContent">
+            <span className="hintBtnTitle">精准填数</span>
+            <span className="hintBtnDesc">直接填入选中格子的正确答案</span>
+          </span>
         </Button>
       </Modal>
     )
@@ -520,7 +604,7 @@ export default function App() {
             btnClick()
             setPauseOpen(false)
             setPaused(false)
-            setScreen('home')
+            navigateTo('home')
           }}
         >
           返回首页
@@ -531,7 +615,7 @@ export default function App() {
             btnClick()
             setPauseOpen(false)
             setSettingsBack('pause')
-            setScreen('settings')
+            navigateTo('settings')
           }}
         >
           设置
@@ -576,12 +660,15 @@ export default function App() {
           onContinue={onContinue}
           onNewGame={(d) => startGame(d, 'normal')}
           onDaily={(d) => startGame(d, 'daily')}
-          onStats={() => setScreen('stats')}
+          onStats={() => {
+            navigateTo('stats', 'forward')
+          }}
           onSettings={() => {
             setSettingsBack('home')
-            setScreen('settings')
+            navigateTo('settings', 'forward')
           }}
           soundOn={settings.sound}
+          animateIn={transitionDir === 'none'}
         />
         {toast}
       </>
@@ -596,16 +683,16 @@ export default function App() {
           onChange={setSettings}
           onBack={() => {
             if (settingsBack === 'pause' && game) {
-              setScreen('game')
+              navigateTo('game', 'backward')
               setPaused(true)
               setPauseOpen(true)
               return
             }
             if (settingsBack === 'game' && game) {
-              setScreen('game')
+              navigateTo('game', 'backward')
               return
             }
-            setScreen('home')
+            navigateTo('home', 'backward')
           }}
           onResetAll={() => {
             clearAll()
@@ -613,9 +700,11 @@ export default function App() {
             setStats(defaultStats())
             setGame(null)
             showToast('已重置')
-            setScreen('home')
+            navigateTo('home', 'backward')
           }}
-          onChangelog={() => setScreen('changelog')}
+          onChangelog={() => navigateTo('changelog', 'forward')}
+          onSyncNow={handleSyncNow}
+          onDisconnectCloud={handleDisconnectCloud}
         />
         {toast}
       </>
@@ -625,7 +714,7 @@ export default function App() {
   if (screen === 'stats') {
     return (
       <>
-        <StatsScreen value={stats} onBack={() => setScreen('home')} />
+        <StatsScreen value={stats} onBack={() => navigateTo('home', 'backward')} />
         {toast}
       </>
     )
@@ -636,7 +725,7 @@ export default function App() {
       <>
         <ChangelogScreen
           soundOn={settings.sound}
-          onBack={() => setScreen('settings')}
+          onBack={() => navigateTo('settings', 'backward')}
         />
         {toast}
       </>
@@ -670,12 +759,15 @@ export default function App() {
           onContinue={() => {}}
           onNewGame={(d) => startGame(d, 'normal')}
           onDaily={(d) => startGame(d, 'daily')}
-          onStats={() => setScreen('stats')}
+          onStats={() => {
+            navigateTo('stats', 'forward')
+          }}
           onSettings={() => {
             setSettingsBack('home')
-            setScreen('settings')
+            navigateTo('settings', 'forward')
           }}
           soundOn={settings.sound}
+          animateIn={transitionDir === 'none'}
         />
         {toast}
       </>

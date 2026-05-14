@@ -1,5 +1,5 @@
 export type Mode = 'system' | 'light' | 'dark'
-export type Theme = 'classic' | 'sand' | 'sage' | 'slate'
+export type Theme = 'classic' | 'sand' | 'sage' | 'slate' | 'ocean' | 'forest' | 'sunset' | 'highContrast'
 export type KeyboardSide = 'left' | 'right'
 export type InputMode = 'cellFirst' | 'numberFirst'
 
@@ -23,6 +23,21 @@ export type Settings = {
   inputMode: InputMode
   keyboardSide: KeyboardSide
   cloudSync: boolean
+  cloudProvider?: 'supabase' | 'nas'
+  lastSyncAt?: number
+}
+
+export type CloudSyncAuth = {
+  nickname: string
+  pin: string
+}
+
+export type CloudSyncData = {
+  settings: Settings
+  stats: Stats
+  game: GameSnapshot | null
+  syncedAt: number
+  version: number
 }
 
 export type GameId = {

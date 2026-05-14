@@ -1,6 +1,5 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import type { Difficulty } from '../types'
-import { Button } from '../ui'
 import { APP_VERSION } from '../version'
 import { playSound } from '../sound'
 
@@ -30,6 +29,11 @@ const diffStars = (d: Difficulty) => {
 
 const homeLogoDigits = [5, 3, 7, 6, 1, 9, 2, 4, 8]
 
+const menuItems = [
+  { id: 'stats', icon: '📊', label: '统计', color: '#6c5ce7' },
+  { id: 'settings', icon: '⚙️', label: '设置', color: '#00b894' },
+]
+
 export const Home = ({
   canContinue,
   onContinue,
@@ -38,6 +42,7 @@ export const Home = ({
   onStats,
   onSettings,
   soundOn,
+  animateIn = true,
 }: {
   canContinue: boolean
   onContinue: () => void
@@ -46,8 +51,16 @@ export const Home = ({
   onStats: () => void
   onSettings: () => void
   soundOn: boolean
+  animateIn?: boolean
 }) => {
   const [logoClicked, setLogoClicked] = useState(false)
+  const [shouldAnimate, setShouldAnimate] = useState(animateIn)
+  const [showDiffPicker, setShowDiffPicker] = useState<'newGame' | 'daily' | null>(null)
+  const [selectedCategory, setSelectedCategory] = useState<'newGame' | 'daily' | null>(null)
+
+  useEffect(() => {
+    setShouldAnimate(animateIn)
+  }, [animateIn])
 
   const onHover = useCallback(() => playSound(soundOn, 'hover'), [soundOn])
   const onClick = useCallback(() => playSound(soundOn, 'click'), [soundOn])
@@ -56,6 +69,33 @@ export const Home = ({
     playSound(soundOn, 'click')
     setLogoClicked(true)
     window.setTimeout(() => setLogoClicked(false), 600)
+  }
+
+  const handleCategoryClick = (category: 'newGame' | 'daily') => {
+    onClick()
+    if (showDiffPicker === category) {
+      setShowDiffPicker(null)
+      setSelectedCategory(null)
+    } else {
+      setShowDiffPicker(category)
+      setSelectedCategory(category)
+    }
+  }
+
+  const handleDiffSelect = (d: Difficulty) => {
+    onClick()
+    setShowDiffPicker(null)
+    setSelectedCategory(null)
+    if (selectedCategory === 'newGame') {
+      onNewGame(d)
+    } else {
+      onDaily(d)
+    }
+  }
+
+  const handleBackdropClick = () => {
+    setShowDiffPicker(null)
+    setSelectedCategory(null)
   }
 
   const diffs: Array<{ d: Difficulty; label: string }> = [
@@ -68,7 +108,7 @@ export const Home = ({
   ]
 
   return (
-    <div className="app" role="application">
+    <div className={`app ${shouldAnimate ? 'screenEnter' : ''}`} role="application">
       <div className="homeLogo" style={{ cursor: 'pointer' }} onClick={onLogoClick}>
         <div className={`homeLogoGrid${logoClicked ? ' homeLogoGridClicked' : ''}`}>
           {homeLogoDigits.map((d, i) => (
@@ -79,50 +119,79 @@ export const Home = ({
       <div className="homeTitle">数独</div>
       <div className="homeSubtitle">随时随地，挑战你的逻辑思维</div>
 
-      <div className="btnRow">
-        <Button wide disabled={!canContinue} onClick={onContinue} onHover={onHover} onClickSound={onClick}>
-          继续游戏
-        </Button>
+      {canContinue && (
+        <button
+          className="menuCard menuCardPrimary"
+          onClick={() => { onClick(); onContinue() }}
+          onMouseEnter={onHover}
+        >
+          <span className="menuCardIcon">▶️</span>
+          <span className="menuCardLabel">继续游戏</span>
+          <span className="menuCardArrow">→</span>
+        </button>
+      )}
 
-        <div className="card">
-          <div className="cardHeader">
-            <span className="muted">新游戏</span>
-          </div>
-          <div className="btnRow">
-            {diffs.map((x) => (
-              <button key={x.d} type="button" className="diffBtn" onClick={() => { onClick(); onNewGame(x.d) }} onMouseEnter={onHover}>
-                <span>{x.label}</span>
-                <span className={diffBadgeClass(x.d)}>
-                  {'★'.repeat(diffStars(x.d))}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="cardHeader">
-            <span className="muted">每日挑战</span>
-          </div>
-          <div className="btnRow">
-            {diffs.map((x) => (
-              <button key={x.d} type="button" className="diffBtn" onClick={() => { onClick(); onDaily(x.d) }} onMouseEnter={onHover}>
-                <span>{x.label}</span>
-                <span className={diffBadgeClass(x.d)}>
-                  {'★'.repeat(diffStars(x.d))}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <Button wide onClick={onStats} onHover={onHover} onClickSound={onClick}>
-          统计数据
-        </Button>
-        <Button wide onClick={onSettings} onHover={onHover} onClickSound={onClick}>
-          设置
-        </Button>
+      <div className="menuGrid">
+        <button
+          className={`menuCard ${selectedCategory === 'newGame' ? 'menuCardActive' : ''}`}
+          onClick={() => handleCategoryClick('newGame')}
+          onMouseEnter={onHover}
+        >
+          <span className="menuCardIcon">🎮</span>
+          <span className="menuCardLabel">新游戏</span>
+        </button>
+        <button
+          className={`menuCard ${selectedCategory === 'daily' ? 'menuCardActive' : ''}`}
+          onClick={() => handleCategoryClick('daily')}
+          onMouseEnter={onHover}
+        >
+          <span className="menuCardIcon">📅</span>
+          <span className="menuCardLabel">每日挑战</span>
+        </button>
       </div>
+
+      {menuItems.map((item) => (
+        <button
+          key={item.id}
+          className="menuCard"
+          onClick={() => {
+            onClick()
+            if (item.id === 'stats') onStats()
+            if (item.id === 'settings') onSettings()
+          }}
+          onMouseEnter={onHover}
+        >
+          <span className="menuCardIcon">{item.icon}</span>
+          <span className="menuCardLabel">{item.label}</span>
+          <span className="menuCardArrow">→</span>
+        </button>
+      ))}
+
+      {showDiffPicker && (
+        <div className="diffPickerOverlay" onClick={handleBackdropClick}>
+          <div className="diffPicker" onClick={(e) => e.stopPropagation()}>
+            <div className="diffPickerHeader">
+              <span>{showDiffPicker === 'newGame' ? '🎮 选择难度' : '📅 每日挑战'}</span>
+            </div>
+            <div className="diffPickerGrid">
+              {diffs.map((x) => (
+                <button
+                  key={x.d}
+                  type="button"
+                  className="diffPickerBtn"
+                  onClick={() => handleDiffSelect(x.d)}
+                  onMouseEnter={onHover}
+                >
+                  <span className="diffPickerLabel">{x.label}</span>
+                  <span className={diffBadgeClass(x.d)}>
+                    {'★'.repeat(diffStars(x.d))}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="homeFooter">
         <span className="homeFooterVersion">v{APP_VERSION}</span>

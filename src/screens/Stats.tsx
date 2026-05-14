@@ -18,18 +18,54 @@ const fmtTimeShort = (sec: number) => {
   return `${m}:${String(r).padStart(2, '0')}`
 }
 
+type AchievementKey = 'intro10' | 'noMistakeHard' | 'noHintExpert10' | 'daily30' | 'hellMaster' | 'speedDemon' | 'persistence' | 'perfectionist'
+
+interface AchievementDef {
+  key: AchievementKey
+  name: string
+  desc: string
+  icon: string
+  tier: 'bronze' | 'silver' | 'gold' | 'platinum'
+}
+
+const achievementDefs: AchievementDef[] = [
+  { key: 'intro10', name: '入门玩家', desc: '完成10局新手难度', icon: '🎯', tier: 'bronze' },
+  { key: 'noMistakeHard', name: '零失误大师', desc: '零失误完成任意一局', icon: '✨', tier: 'silver' },
+  { key: 'noHintExpert10', name: '无提示王者', desc: '10局无提示完成', icon: '🧠', tier: 'gold' },
+  { key: 'daily30', name: '每日达人', desc: '连续打卡30天', icon: '📅', tier: 'gold' },
+  { key: 'hellMaster', name: '数独宗师', desc: '完成地狱难度', icon: '👑', tier: 'platinum' },
+  { key: 'speedDemon', name: '速度之星', desc: '任意难度5分钟内完成', icon: '⚡', tier: 'silver' },
+  { key: 'persistence', name: '坚持不懈', desc: '累计完成100局', icon: '💪', tier: 'gold' },
+  { key: 'perfectionist', name: '完美主义者', desc: '零失误零提示通关困难+', icon: '💎', tier: 'platinum' },
+]
+
 export const StatsScreen = ({ value, onBack }: { value: Stats; onBack: () => void }) => {
   const total = Math.max(1, value.totalCompleted)
   const diffs = ['beginner', 'easy', 'medium', 'hard', 'expert', 'hell'] as const
   const btnClick = () => playSound(true, 'click')
 
-  const achievements: Array<{ key: string; name: string; desc: string; done: boolean }> = [
-    { key: 'intro10', name: '入门玩家', desc: '完成10局新手难度', done: !!value.achievements['intro10'] },
-    { key: 'noMistakeHard', name: '零失误大师', desc: '零失误完成任意一局', done: !!value.achievements['noMistakeHard'] },
-    { key: 'noHintExpert10', name: '无提示王者', desc: '10局无提示完成', done: !!value.achievements['noHintExpert10'] },
-    { key: 'daily30', name: '每日达人', desc: '连续打卡30天', done: !!value.achievements['daily30'] },
-    { key: 'hellMaster', name: '数独宗师', desc: '完成地狱难度', done: !!value.achievements['hellMaster'] },
-  ]
+  const checkSpeedDemon = value.totalCompleted >= 1 &&
+    Object.entries(value.bestTimeSec).some(([, time]) => time !== undefined && time <= 300)
+
+  const checkPersistence = value.totalCompleted >= 100
+
+  const checkPerfectionist = value.noErrorCompletions >= 1 &&
+    value.noHintCompletions >= 1 &&
+    ((value.completedByDifficulty.hard ?? 0) >= 1 ||
+     (value.completedByDifficulty.expert ?? 0) >= 1 ||
+     (value.completedByDifficulty.hell ?? 0) >= 1)
+
+  const achievementStates: Record<string, boolean> = {
+    ...value.achievements,
+    speedDemon: checkSpeedDemon,
+    persistence: checkPersistence,
+    perfectionist: checkPerfectionist,
+  }
+
+  const achievements = achievementDefs.map((def) => ({
+    ...def,
+    done: !!achievementStates[def.key],
+  }))
 
   const doneCount = achievements.filter((a) => a.done).length
 
@@ -49,7 +85,7 @@ export const StatsScreen = ({ value, onBack }: { value: Stats; onBack: () => voi
           <div className="row">
             <div className="muted">总时长</div>
             <div className="spacer" />
-            <div className="statValue">{fmtTime(value.totalTimeSec)}</div>
+            <div className="statValue">{fmtTime(value.totalCompleted > 0 ? value.totalTimeSec : 0)}</div>
           </div>
           <div className="row">
             <div className="muted">通关数</div>
@@ -119,28 +155,28 @@ export const StatsScreen = ({ value, onBack }: { value: Stats; onBack: () => voi
       <div className="card">
         <div className="cardHeader">
           <span className="muted">成就</span>
-          <span className="statValue" style={{ fontSize: 14, color: 'var(--accent)' }}>
+          <span className="achievementProgress">
             {doneCount}/{achievements.length}
           </span>
         </div>
-        <div style={{ display: 'grid', gap: 8 }}>
+        <div className="achievementGrid">
           {achievements.map((a) => (
             <div
               key={a.key}
-              className="row"
-              style={{
-                padding: '8px 0',
-                opacity: a.done ? 1 : 0.45,
-                transition: 'opacity 300ms ease',
-              }}
+              className={`achievementCard ${a.done ? `achievement${a.tier.charAt(0).toUpperCase() + a.tier.slice(1)}Done` : ''}`}
+              title={a.desc}
             >
-              <div style={{ fontWeight: 500 }}>{a.name}</div>
-              <div className="spacer" />
-              <div className="muted" style={{ fontSize: 12 }}>
-                {a.done ? '已解锁' : a.desc}
-              </div>
+              <div className="achievementIcon">{a.icon}</div>
+              <div className="achievementName">{a.name}</div>
+              {a.done && <div className="achievementCheck">✓</div>}
             </div>
           ))}
+        </div>
+        <div className="achievementLegend">
+          <span className="legendItem legendBronze"><span className="legendDot"></span>铜</span>
+          <span className="legendItem legendSilver"><span className="legendDot"></span>银</span>
+          <span className="legendItem legendGold"><span className="legendDot"></span>金</span>
+          <span className="legendItem legendPlatinum"><span className="legendDot"></span>钻</span>
         </div>
       </div>
     </div>
