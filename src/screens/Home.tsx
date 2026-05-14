@@ -99,12 +99,12 @@ export const Home = ({
   }
 
   const diffs: Array<{ d: Difficulty; label: string }> = [
-    { d: 'beginner', label: '新手' },
-    { d: 'easy', label: '简单' },
-    { d: 'medium', label: '中等' },
-    { d: 'hard', label: '困难' },
-    { d: 'expert', label: '专家' },
-    { d: 'hell', label: '地狱' },
+    { d: 'beginner', label: '新手😁' },
+    { d: 'easy', label: '简单🙂' },
+    { d: 'medium', label: '中等🤔' },
+    { d: 'hard', label: '困难😢' },
+    { d: 'expert', label: '专家🙃' },
+    { d: 'hell', label: '地狱🤪' },
   ]
 
   return (
