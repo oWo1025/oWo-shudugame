@@ -1,7 +1,5 @@
-import type { CloudSyncAuth, CloudSyncData, GameSnapshot, Settings, Stats } from './types'
-import { getStoredAuth } from './cloudSync'
+import type { CloudSyncAuth, CloudSyncData } from './types'
 
-const KEY_NAS_CONFIG = 'sudoku.nasConfig.v1'
 const KEY_LAST_SYNC = 'sudoku.lastSync.v1'
 const KEY_SYNC_VERSION = 'sudoku.syncVersion.v1'
 
@@ -12,25 +10,32 @@ export type NasConfig = {
   path: string
 }
 
-export const getStoredNasConfig = (): NasConfig | null => {
-  if (typeof window === 'undefined') return null
-  const data = localStorage.getItem(KEY_NAS_CONFIG)
-  return data ? JSON.parse(data) : null
+let nasEnvConfig: NasConfig | null = null
+
+try {
+  if (typeof window !== 'undefined') {
+    const metaUrl = document.querySelector('meta[name="nas-url"]') as HTMLMetaElement
+    const metaUser = document.querySelector('meta[name="nas-username"]') as HTMLMetaElement
+    const metaPass = document.querySelector('meta[name="nas-password"]') as HTMLMetaElement
+    const metaPath = document.querySelector('meta[name="nas-path"]') as HTMLMetaElement
+
+    if (metaUrl?.content && metaUser?.content && metaPass?.content) {
+      nasEnvConfig = {
+        serverUrl: metaUrl.content,
+        username: metaUser.content,
+        password: metaPass.content,
+        path: metaPath?.content || '/Sudoku',
+      }
+    }
+  }
+} catch {
+  console.warn('Failed to read NAS env config from meta tags')
 }
 
-export const setStoredNasConfig = (config: NasConfig): void => {
-  if (typeof window === 'undefined') return
-  localStorage.setItem(KEY_NAS_CONFIG, JSON.stringify(config))
-}
-
-export const clearStoredNasConfig = (): void => {
-  if (typeof window === 'undefined') return
-  localStorage.removeItem(KEY_NAS_CONFIG)
-}
+export const getNasConfig = (): NasConfig | null => nasEnvConfig
 
 export const isNasConfigured = (): boolean => {
-  const config = getStoredNasConfig()
-  return !!(config?.serverUrl && config?.username && config?.password)
+  return !!nasEnvConfig
 }
 
 const generateUserId = (auth: CloudSyncAuth): string => {
@@ -45,27 +50,9 @@ const buildAuthHeader = (username: string, password: string): string => {
   return 'Basic ' + btoa(`${username}:${password}`)
 }
 
-export const syncToNas = async (data: {
-  settings: Settings
-  stats: Stats
-  game: GameSnapshot | null
-}): Promise<boolean> => {
-  const config = getStoredNasConfig()
+export const syncToNas = async (data: CloudSyncData, auth: CloudSyncAuth): Promise<boolean> => {
+  const config = nasEnvConfig
   if (!config) return false
-
-  const auth = getStoredAuth()
-  if (!auth) return false
-
-  const currentVersion = parseInt(localStorage.getItem(KEY_SYNC_VERSION) || '0', 10)
-  const newVersion = currentVersion + 1
-
-  const syncData: CloudSyncData = {
-    settings: data.settings,
-    stats: data.stats,
-    game: data.game,
-    syncedAt: Date.now(),
-    version: newVersion,
-  }
 
   const fileName = getDataFileName(auth)
   const filePath = config.path.endsWith('/') ? config.path + fileName : `${config.path}/${fileName}`
@@ -78,7 +65,7 @@ export const syncToNas = async (data: {
         'Content-Type': 'application/json',
         'Authorization': buildAuthHeader(config.username, config.password),
       },
-      body: JSON.stringify(syncData),
+      body: JSON.stringify(data),
     })
 
     if (!response.ok && response.status !== 201 && response.status !== 204) {
@@ -87,7 +74,7 @@ export const syncToNas = async (data: {
     }
 
     localStorage.setItem(KEY_LAST_SYNC, Date.now().toString())
-    localStorage.setItem(KEY_SYNC_VERSION, newVersion.toString())
+    localStorage.setItem(KEY_SYNC_VERSION, String(data.version))
     return true
   } catch (e) {
     console.error('NAS sync error:', e)
@@ -95,12 +82,9 @@ export const syncToNas = async (data: {
   }
 }
 
-export const syncFromNas = async (): Promise<CloudSyncData | null> => {
-  const config = getStoredNasConfig()
+export const syncFromNas = async (auth: CloudSyncAuth): Promise<CloudSyncData | null> => {
+  const config = nasEnvConfig
   if (!config) return null
-
-  const auth = getStoredAuth()
-  if (!auth) return null
 
   const fileName = getDataFileName(auth)
   const filePath = config.path.endsWith('/') ? config.path + fileName : `${config.path}/${fileName}`
@@ -122,7 +106,7 @@ export const syncFromNas = async (): Promise<CloudSyncData | null> => {
 
     const cloudData = (await response.json()) as CloudSyncData
     localStorage.setItem(KEY_LAST_SYNC, Date.now().toString())
-    localStorage.setItem(KEY_SYNC_VERSION, (cloudData.version || 0).toString())
+    localStorage.setItem(KEY_SYNC_VERSION, String(cloudData.version || 0))
 
     return cloudData
   } catch (e) {
@@ -131,7 +115,10 @@ export const syncFromNas = async (): Promise<CloudSyncData | null> => {
   }
 }
 
-export const testNasConnection = async (config: NasConfig): Promise<{ success: boolean; error?: string }> => {
+export const testNasConnection = async (): Promise<{ success: boolean; error?: string }> => {
+  const config = nasEnvConfig
+  if (!config) return { success: false, error: 'NAS 未配置' }
+
   try {
     const testUrl = `${config.serverUrl.replace(/\/$/, '')}/${config.path.replace(/^\//, '')}`
     const response = await fetch(testUrl, {

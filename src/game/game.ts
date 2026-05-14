@@ -66,6 +66,8 @@ export const toSnapshot = (g: GameRuntime): GameSnapshot => ({
   selectedDigit: g.selectedDigit,
   undo: g.undo,
   redo: g.redo,
+  wrongCount: g.wrongCount,
+  hintCount: g.hintCount,
 })
 
 export const fromSnapshot = (s: GameSnapshot): GameRuntime => {
@@ -87,8 +89,8 @@ export const fromSnapshot = (s: GameSnapshot): GameRuntime => {
     redo: s.redo ?? [],
     startedAt: s.startedAt,
     elapsedMs: s.elapsedMs ?? 0,
-    wrongCount: 0,
-    hintCount: 0,
+    wrongCount: s.wrongCount ?? 0,
+    hintCount: s.hintCount ?? 0,
   }
 }
 

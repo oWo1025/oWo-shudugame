@@ -1,24 +1,31 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-  <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#4F6BF6"/>
-      <stop offset="100%" style="stop-color:#3B4CC0"/>
-    </linearGradient>
-  </defs>
-  <rect width="48" height="48" rx="10" fill="url(#bg)"/>
-  <g transform="translate(5, 5)">
-    <rect x="0" y="0" width="38" height="38" rx="2" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
-    <path d="M12.5 0v38M25.5 0v38M0 12.5h38M0 25.5h38" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/>
-    <path d="M12.5 0v38M25.5 0v38" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
-    <path d="M0 12.5h38M0 25.5h38" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
-    <text x="6" y="10" font-size="7" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="rgba(255,255,255,0.9)">9</text>
-    <text x="19" y="10" font-size="7" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="rgba(255,255,255,0.5)">3</text>
-    <text x="32" y="10" font-size="7" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="rgba(255,255,255,0.5)">7</text>
-    <text x="6" y="23" font-size="7" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="rgba(255,255,255,0.5)">4</text>
-    <text x="19" y="23" font-size="7" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="rgba(255,255,255,0.9)">1</text>
-    <text x="32" y="23" font-size="7" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="rgba(255,255,255,0.5)">6</text>
-    <text x="6" y="36" font-size="7" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="rgba(255,255,255,0.5)">2</text>
-    <text x="19" y="36" font-size="7" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="rgba(255,255,255,0.5)">8</text>
-    <text x="32" y="36" font-size="7" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="rgba(255,255,255,0.9)">5</text>
+  <rect width="48" height="48" rx="10" fill="#F0F2F5"/>
+  <g transform="translate(3, 3)">
+    <rect x="0" y="0" width="12" height="12" rx="2.5" fill="#6c5ce7"/>
+    <text x="6" y="9.5" font-size="7.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="#fff">5</text>
+
+    <rect x="15" y="0" width="12" height="12" rx="2.5" fill="#a29bfe"/>
+    <text x="21" y="9.5" font-size="7.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="#6c5ce7">3</text>
+
+    <rect x="30" y="0" width="12" height="12" rx="2.5" fill="#6c5ce7"/>
+    <text x="36" y="9.5" font-size="7.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="#fff">7</text>
+
+    <rect x="0" y="15" width="12" height="12" rx="2.5" fill="#a29bfe"/>
+    <text x="6" y="24.5" font-size="7.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="#6c5ce7">6</text>
+
+    <rect x="15" y="15" width="12" height="12" rx="2.5" fill="#a29bfe"/>
+    <text x="21" y="24.5" font-size="7.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="#6c5ce7">1</text>
+
+    <rect x="30" y="15" width="12" height="12" rx="2.5" fill="#6c5ce7"/>
+    <text x="36" y="24.5" font-size="7.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="#fff">9</text>
+
+    <rect x="0" y="30" width="12" height="12" rx="2.5" fill="#a29bfe"/>
+    <text x="6" y="39.5" font-size="7.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="#6c5ce7">2</text>
+
+    <rect x="15" y="30" width="12" height="12" rx="2.5" fill="#6c5ce7"/>
+    <text x="21" y="39.5" font-size="7.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="#fff">4</text>
+
+    <rect x="30" y="30" width="12" height="12" rx="2.5" fill="#a29bfe"/>
+    <text x="36" y="39.5" font-size="7.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="#6c5ce7">8</text>
   </g>
 </svg>

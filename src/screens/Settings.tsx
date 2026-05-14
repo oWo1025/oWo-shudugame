@@ -59,6 +59,10 @@ export const SettingsScreen = ({
   ]
 
   const handleCloudToggle = (enabled: boolean) => {
+    if (enabled && !cloudConfigured) {
+      set('cloudSync', true)
+      return
+    }
     if (enabled && !hasAuth) {
       setShowCloudSetup(true)
       return
@@ -160,12 +164,19 @@ export const SettingsScreen = ({
               {!cloudConfigured ? (
                 <div style={{
                   fontSize: '13px',
-                  color: 'var(--muted)',
+                  color: '#856404',
                   textAlign: 'center',
+                  padding: '8px',
+                  background: '#fff3cd',
+                  borderRadius: '6px',
                 }}>
-                  ⚠️ 云同步服务未配置
+                  ⚠️ 云同步服务未配置，请联系开发者
                 </div>
-              ) : hasAuth ? (
+              ) : !hasAuth ? (
+                <Button onClick={() => { btnClick(); setShowCloudSetup(true) }}>
+                  设置同步身份
+                </Button>
+              ) : (
                 <>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '13px', color: 'var(--muted)' }}>
@@ -186,10 +197,6 @@ export const SettingsScreen = ({
                     </Button>
                   </div>
                 </>
-              ) : (
-                <Button onClick={() => { btnClick(); setShowCloudSetup(true) }}>
-                  登录 / 注册
-                </Button>
               )}
             </div>
           )}

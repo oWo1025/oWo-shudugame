@@ -1,10 +1,14 @@
 import type { CloudSyncAuth, CloudSyncData, GameSnapshot, Settings, Stats } from './types'
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import {
+  isNasConfigured,
+  syncToNas as uploadToNas,
+  syncFromNas as fetchFromNas,
+} from './nasSync'
 
 const KEY_CLOUD_AUTH = 'sudoku.cloudAuth.v1'
 const KEY_LAST_SYNC = 'sudoku.lastSync.v1'
 const KEY_SYNC_VERSION = 'sudoku.syncVersion.v1'
-const KEY_NAS_CONFIG = 'sudoku.nasConfig.v1'
 
 let supabaseClient: SupabaseClient | null = null
 
@@ -17,7 +21,9 @@ try {
     if (metaUrl?.content) envVars.SUPABASE_URL = metaUrl.content
     if (metaKey?.content) envVars.SUPABASE_ANON_KEY = metaKey.content
   }
-} catch {}
+} catch {
+  console.warn('Failed to read Supabase env config from meta tags')
+}
 
 export const setEnvConfig = (config: { SUPABASE_URL?: string; SUPABASE_ANON_KEY?: string }) => {
   envVars = { ...envVars, ...config }
@@ -30,25 +36,18 @@ export const isSupabaseConfigured = (): boolean => {
   return !!(envVars.SUPABASE_URL && envVars.SUPABASE_ANON_KEY)
 }
 
-export const isNasConfigured = (): boolean => {
-  if (typeof window === 'undefined') return false
-  const configData = localStorage.getItem(KEY_NAS_CONFIG)
-  if (!configData) return false
-  try {
-    const config = JSON.parse(configData)
-    return !!(config.serverUrl && config.username && config.password)
-  } catch {
-    return false
-  }
-}
-
 export const isCloudConfigured = (): boolean => {
   return isSupabaseConfigured() || isNasConfigured()
 }
 
 export const getStoredAuth = (): CloudSyncAuth | null => {
   const data = localStorage.getItem(KEY_CLOUD_AUTH)
-  return data ? JSON.parse(data) : null
+  if (!data) return null
+  try {
+    return JSON.parse(data) as CloudSyncAuth
+  } catch {
+    return null
+  }
 }
 
 export const setStoredAuth = (auth: CloudSyncAuth): void => {
@@ -61,79 +60,6 @@ export const clearStoredAuth = (): void => {
 
 const generateUserId = (auth: CloudSyncAuth): string => {
   return btoa(`${auth.nickname.toLowerCase()}:${auth.pin}`).replace(/[^a-zA-Z0-9]/g, '')
-}
-
-const getStoredNasConfig = (): { serverUrl: string; username: string; password: string; path: string } | null => {
-  if (typeof window === 'undefined') return null
-  const configData = localStorage.getItem(KEY_NAS_CONFIG)
-  return configData ? JSON.parse(configData) : null
-}
-
-const getNasDataFileName = (auth: CloudSyncAuth): string => {
-  return `sudoku_${generateUserId(auth)}.json`
-}
-
-const getNasAuthHeader = (username: string, password: string): string => {
-  return 'Basic ' + btoa(`${username}:${password}`)
-}
-
-const syncToNas = async (data: CloudSyncData, auth: CloudSyncAuth): Promise<boolean> => {
-  const config = getStoredNasConfig()
-  if (!config) return false
-
-  const fileName = getNasDataFileName(auth)
-  const filePath = config.path.endsWith('/') ? config.path + fileName : `${config.path}/${fileName}`
-  const url = `${config.serverUrl.replace(/\/$/, '')}${filePath}`
-
-  try {
-    const response = await fetch(url, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': getNasAuthHeader(config.username, config.password),
-      },
-      body: JSON.stringify(data),
-    })
-
-    if (!response.ok && response.status !== 201 && response.status !== 204) {
-      console.error('NAS sync failed:', response.status, response.statusText)
-      return false
-    }
-
-    return true
-  } catch (e) {
-    console.error('NAS sync error:', e)
-    return false
-  }
-}
-
-const syncFromNas = async (auth: CloudSyncAuth): Promise<CloudSyncData | null> => {
-  const config = getStoredNasConfig()
-  if (!config) return null
-
-  const fileName = getNasDataFileName(auth)
-  const filePath = config.path.endsWith('/') ? config.path + fileName : `${config.path}/${fileName}`
-  const url = `${config.serverUrl.replace(/\/$/, '')}${filePath}`
-
-  try {
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Authorization': getNasAuthHeader(config.username, config.password),
-      },
-    })
-
-    if (!response.ok) {
-      if (response.status === 404) return null
-      console.error('NAS fetch failed:', response.status, response.statusText)
-      return null
-    }
-
-    return (await response.json()) as CloudSyncData
-  } catch (e) {
-    console.error('NAS fetch error:', e)
-    return null
-  }
 }
 
 const syncToSupabase = async (data: CloudSyncData, auth: CloudSyncAuth): Promise<boolean> => {
@@ -202,9 +128,13 @@ export const syncToCloud = async (data: {
     version: newVersion,
   }
 
-  const nasSuccess = await syncToNas(syncData, auth)
-  const supabaseSuccess = await syncToSupabase(syncData, auth)
+  const results = await Promise.allSettled([
+    uploadToNas(syncData, auth),
+    syncToSupabase(syncData, auth),
+  ])
 
+  const nasSuccess = results[0].status === 'fulfilled' ? results[0].value : false
+  const supabaseSuccess = results[1].status === 'fulfilled' ? results[1].value : false
   const success = nasSuccess || supabaseSuccess
 
   if (success) {
@@ -219,8 +149,13 @@ export const syncFromCloud = async (): Promise<CloudSyncData | null> => {
   const auth = getStoredAuth()
   if (!auth) return null
 
-  const nasData = await syncFromNas(auth)
-  const supabaseData = await syncFromSupabase(auth)
+  const results = await Promise.allSettled([
+    fetchFromNas(auth),
+    syncFromSupabase(auth),
+  ])
+
+  const nasData = results[0].status === 'fulfilled' ? results[0].value : null
+  const supabaseData = results[1].status === 'fulfilled' ? results[1].value : null
 
   if (!nasData && !supabaseData) return null
   if (!nasData) return supabaseData

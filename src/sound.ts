@@ -52,7 +52,7 @@ const warmUp = () => {
     }
   }
   if (ctx.state === 'suspended') {
-    ctx.resume().catch(() => {})
+    ctx.resume().catch((e) => { console.warn('AudioContext resume failed:', e) })
   }
 }
 
@@ -130,5 +130,5 @@ const sounds: Record<SoundName, () => Promise<void>> = {
 
 export const playSound = (on: boolean, name: SoundName) => {
   if (!on) return
-  sounds[name]().catch(() => {})
+  sounds[name]().catch((e) => { console.warn(`Sound "${name}" play failed:`, e) })
 }

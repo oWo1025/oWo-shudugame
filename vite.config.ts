@@ -5,6 +5,13 @@ import { VitePWA } from 'vite-plugin-pwa'
 import pkg from './package.json'
 import changelogPlugin from './vite-plugin-changelog'
 
+const SUPABASE_URL = process.env.SUPABASE_URL || ''
+const SUPABASE_KEY = process.env.SUPABASE_KEY || ''
+const NAS_URL = process.env.NAS_URL || ''
+const NAS_USERNAME = process.env.NAS_USERNAME || ''
+const NAS_PASSWORD = process.env.NAS_PASSWORD || ''
+const NAS_PATH = process.env.NAS_PATH || '/Sudoku'
+
 export default defineConfig({
   base: './',
   define: {
@@ -59,5 +66,17 @@ export default defineConfig({
         navigateFallback: './index.html',
       },
     }),
+    {
+      name: 'inject-meta-config',
+      transformIndexHtml(html) {
+        return html
+          .replace('content="" name="supabase-url"', `content="${SUPABASE_URL}" name="supabase-url"`)
+          .replace('content="" name="supabase-key"', `content="${SUPABASE_KEY}" name="supabase-key"`)
+          .replace('content="" name="nas-url"', `content="${NAS_URL}" name="nas-url"`)
+          .replace('content="" name="nas-username"', `content="${NAS_USERNAME}" name="nas-username"`)
+          .replace('content="" name="nas-password"', `content="${NAS_PASSWORD}" name="nas-password"`)
+          .replace('content="/Sudoku" name="nas-path"', `content="${NAS_PATH}" name="nas-path"`)
+      },
+    },
   ],
 })

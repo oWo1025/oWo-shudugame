@@ -62,6 +62,8 @@ export type GameSnapshot = {
   selectedDigit: number
   undo: string[]
   redo: string[]
+  wrongCount: number
+  hintCount: number
 }
 
 export type Stats = {

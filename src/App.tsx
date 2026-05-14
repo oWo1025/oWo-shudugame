@@ -27,7 +27,7 @@ const today = () => new Date().toISOString().slice(0, 10)
 const vibrate = (on: boolean) => {
   if (!on) return
   if (!('vibrate' in navigator)) return
-  ;(navigator as any).vibrate?.(10)
+  navigator.vibrate?.(10)
 }
 
 export default function App() {

@@ -13,18 +13,38 @@ const safeParse = <T>(value: string | null): T | null => {
   }
 }
 
+const safeSetItem = (key: string, value: string): boolean => {
+  try {
+    localStorage.setItem(key, value)
+    return true
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'QuotaExceededError') {
+      console.warn('localStorage quota exceeded, clearing old data')
+      try {
+        localStorage.removeItem('sudoku.game.v1')
+        localStorage.setItem(key, value)
+        return true
+      } catch {
+        return false
+      }
+    }
+    console.warn('localStorage write failed:', e)
+    return false
+  }
+}
+
 export const loadSettings = (): Settings | null =>
   safeParse<Settings>(localStorage.getItem(KEY_SETTINGS))
 
 export const saveSettings = (s: Settings) => {
-  localStorage.setItem(KEY_SETTINGS, JSON.stringify(s))
+  safeSetItem(KEY_SETTINGS, JSON.stringify(s))
 }
 
 export const loadGame = (): GameSnapshot | null =>
   safeParse<GameSnapshot>(localStorage.getItem(KEY_GAME))
 
 export const saveGame = (g: GameSnapshot) => {
-  localStorage.setItem(KEY_GAME, JSON.stringify(g))
+  safeSetItem(KEY_GAME, JSON.stringify(g))
 }
 
 export const clearGame = () => {
@@ -35,7 +55,7 @@ export const loadStats = (): Stats | null =>
   safeParse<Stats>(localStorage.getItem(KEY_STATS))
 
 export const saveStats = (s: Stats) => {
-  localStorage.setItem(KEY_STATS, JSON.stringify(s))
+  safeSetItem(KEY_STATS, JSON.stringify(s))
 }
 
 export const clearAll = () => {
