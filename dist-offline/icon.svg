@@ -1,5 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <rect x="32" y="32" width="448" height="448" rx="24" fill="#F8F9FA" stroke="#212529" stroke-width="24" />
-  <path d="M192 56v400M320 56v400M56 192h400M56 320h400" stroke="#212529" stroke-width="20" />
-  <text x="256" y="312" font-size="184" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle" fill="#212529">5</text>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4F6BF6"/>
+      <stop offset="100%" style="stop-color:#3B4CC0"/>
+    </linearGradient>
+    <linearGradient id="cell" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.18"/>
+      <stop offset="100%" style="stop-color:#FFFFFF;stop-opacity:0.06"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="108" fill="url(#bg)"/>
+  <g transform="translate(56, 56)">
+    <rect x="0" y="0" width="400" height="400" rx="20" fill="url(#cell)" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>
+    <path d="M133 0v400M267 0v400M0 133h400M0 267h400" stroke="rgba(255,255,255,0.35)" stroke-width="3"/>
+    <path d="M133 0v400M267 0v400" stroke="rgba(255,255,255,0.6)" stroke-width="5"/>
+    <path d="M0 133h400M0 267h400" stroke="rgba(255,255,255,0.6)" stroke-width="5"/>
+    <text x="66" y="100" font-size="72" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="rgba(255,255,255,0.9)">9</text>
+    <text x="200" y="100" font-size="72" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="rgba(255,255,255,0.5)">3</text>
+    <text x="334" y="100" font-size="72" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="rgba(255,255,255,0.5)">7</text>
+    <text x="66" y="234" font-size="72" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="rgba(255,255,255,0.5)">4</text>
+    <text x="200" y="234" font-size="72" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="rgba(255,255,255,0.9)">1</text>
+    <text x="334" y="234" font-size="72" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="rgba(255,255,255,0.5)">6</text>
+    <text x="66" y="368" font-size="72" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="rgba(255,255,255,0.5)">2</text>
+    <text x="200" y="368" font-size="72" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="rgba(255,255,255,0.5)">8</text>
+    <text x="334" y="368" font-size="72" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="rgba(255,255,255,0.9)">5</text>
+  </g>
 </svg>

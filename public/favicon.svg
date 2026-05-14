@@ -1,5 +1,31 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-  <rect x="2" y="2" width="44" height="44" rx="4" fill="#F8F9FA" stroke="#212529" stroke-width="2" />
-  <path d="M16 4v40M32 4v40M4 16h40M4 32h40" stroke="#212529" stroke-width="2" />
-  <text x="24" y="29" font-size="18" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle" fill="#212529">5</text>
+  <rect width="48" height="48" rx="10" fill="#F0F2F5"/>
+  <g transform="translate(3, 3)">
+    <rect x="0" y="0" width="12" height="12" rx="2.5" fill="#6c5ce7"/>
+    <text x="6" y="9.5" font-size="7.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="#fff">5</text>
+
+    <rect x="15" y="0" width="12" height="12" rx="2.5" fill="#a29bfe"/>
+    <text x="21" y="9.5" font-size="7.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="#6c5ce7">3</text>
+
+    <rect x="30" y="0" width="12" height="12" rx="2.5" fill="#6c5ce7"/>
+    <text x="36" y="9.5" font-size="7.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="#fff">7</text>
+
+    <rect x="0" y="15" width="12" height="12" rx="2.5" fill="#a29bfe"/>
+    <text x="6" y="24.5" font-size="7.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="#6c5ce7">6</text>
+
+    <rect x="15" y="15" width="12" height="12" rx="2.5" fill="#a29bfe"/>
+    <text x="21" y="24.5" font-size="7.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="#6c5ce7">1</text>
+
+    <rect x="30" y="15" width="12" height="12" rx="2.5" fill="#6c5ce7"/>
+    <text x="36" y="24.5" font-size="7.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="#fff">9</text>
+
+    <rect x="0" y="30" width="12" height="12" rx="2.5" fill="#a29bfe"/>
+    <text x="6" y="39.5" font-size="7.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="#6c5ce7">2</text>
+
+    <rect x="15" y="30" width="12" height="12" rx="2.5" fill="#6c5ce7"/>
+    <text x="21" y="39.5" font-size="7.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="#fff">4</text>
+
+    <rect x="30" y="30" width="12" height="12" rx="2.5" fill="#a29bfe"/>
+    <text x="36" y="39.5" font-size="7.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" text-anchor="middle" fill="#6c5ce7">8</text>
+  </g>
 </svg>
