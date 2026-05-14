@@ -4,6 +4,7 @@ import {
   isNasConfigured,
   syncToNas as uploadToNas,
   syncFromNas as fetchFromNas,
+  testNasConnection,
 } from './nasSync'
 
 const KEY_CLOUD_AUTH = 'sudoku.cloudAuth.v1'
@@ -20,6 +21,9 @@ try {
     const metaKey = document.querySelector('meta[name="supabase-key"]') as HTMLMetaElement
     if (metaUrl?.content) envVars.SUPABASE_URL = metaUrl.content
     if (metaKey?.content) envVars.SUPABASE_ANON_KEY = metaKey.content
+    if (envVars.SUPABASE_URL && envVars.SUPABASE_ANON_KEY) {
+      supabaseClient = createClient(envVars.SUPABASE_URL, envVars.SUPABASE_ANON_KEY)
+    }
   }
 } catch {
   console.warn('Failed to read Supabase env config from meta tags')
@@ -70,7 +74,13 @@ const syncToSupabase = async (data: CloudSyncData, auth: CloudSyncAuth): Promise
   try {
     const { error } = await supabaseClient
       .from('sudoku_save')
-      .upsert({ id: userId, data: data, updated_at: new Date().toISOString() }, { onConflict: 'id' })
+      .upsert({
+        id: userId,
+        nickname: auth.nickname,
+        pin: auth.pin,
+        data: data,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'id' })
 
     if (error) {
       console.error('Supabase sync failed:', error)
@@ -162,6 +172,48 @@ export const syncFromCloud = async (): Promise<CloudSyncData | null> => {
   if (!supabaseData) return nasData
 
   return nasData.version >= supabaseData.version ? nasData : supabaseData
+}
+
+export const testSupabaseConnection = async (): Promise<{ success: boolean; error?: string }> => {
+  if (!supabaseClient) return { success: false, error: 'Supabase 未配置' }
+  try {
+    const { error } = await supabaseClient.from('sudoku_save').select('id', { count: 'exact', head: true })
+    if (error) return { success: false, error: error.message }
+    return { success: true }
+  } catch (e) {
+    return { success: false, error: '无法连接到服务器' }
+  }
+}
+
+export const getBackendStatus = async (): Promise<{
+  nasConfigured: boolean
+  nasReachable: boolean
+  nasError?: string
+  supabaseConfigured: boolean
+  supabaseReachable: boolean
+  supabaseError?: string
+}> => {
+  const nasConfigured = isNasConfigured()
+  const supabaseConfigured = isSupabaseConfigured()
+
+  let nasReachable = false
+  let nasError: string | undefined
+  let supabaseReachable = false
+  let supabaseError: string | undefined
+
+  if (nasConfigured) {
+    const result = await testNasConnection()
+    nasReachable = result.success
+    nasError = result.error
+  }
+
+  if (supabaseConfigured) {
+    const result = await testSupabaseConnection()
+    supabaseReachable = result.success
+    supabaseError = result.error
+  }
+
+  return { nasConfigured, nasReachable, nasError, supabaseConfigured, supabaseReachable, supabaseError }
 }
 
 export const getLastSyncAt = (): number | null => {

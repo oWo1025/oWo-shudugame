@@ -117,10 +117,12 @@ export const syncFromNas = async (auth: CloudSyncAuth): Promise<CloudSyncData | 
 
 export const testNasConnection = async (): Promise<{ success: boolean; error?: string }> => {
   const config = nasEnvConfig
-  if (!config) return { success: false, error: 'NAS 未配置' }
+  if (!config) return { success: false, error: '服务器N未配置' }
+
+  const baseUrl = config.serverUrl.replace(/\/$/, '')
+  const testUrl = `${baseUrl}/${config.path.replace(/^\//, '')}`
 
   try {
-    const testUrl = `${config.serverUrl.replace(/\/$/, '')}/${config.path.replace(/^\//, '')}`
     const response = await fetch(testUrl, {
       method: 'PROPFIND',
       headers: {
@@ -134,9 +136,24 @@ export const testNasConnection = async (): Promise<{ success: boolean; error?: s
       return { success: true }
     }
 
+    if (response.status === 401 || response.status === 403) {
+      return { success: false, error: '用户名或密码错误' }
+    }
+
+    if (response.status === 404) {
+      return { success: false, error: `路径 ${config.path} 不存在，请在服务器N上创建此文件夹` }
+    }
+
     return { success: false, error: `服务器返回 ${response.status}` }
   } catch (e) {
-    return { success: false, error: '无法连接到服务器' }
+    const msg = e instanceof TypeError ? e.message : String(e)
+    if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+      return {
+        success: false,
+        error: `无法访问`,
+      }
+    }
+    return { success: false, error: `请求异常: ${msg}` }
   }
 }
 

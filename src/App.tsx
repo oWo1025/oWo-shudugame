@@ -17,6 +17,7 @@ import { ChangelogScreen } from './screens/Changelog'
 import { Button, Modal, useToast } from './ui'
 import { playSound } from './sound'
 import { syncToCloud, syncFromCloud, clearStoredAuth, getStoredAuth, isCloudConfigured } from './cloudSync'
+import { enqueuePendingSync, startRetryScheduler, stopRetryScheduler } from './syncQueue'
 
 type Screen = 'home' | 'game' | 'stats' | 'settings' | 'victory' | 'changelog'
 type ScreenDirection = 'forward' | 'backward' | 'none'
@@ -66,11 +67,20 @@ export default function App() {
     }
     showToast('正在同步...')
     const gameSnapshot = game ? toSnapshot(game) : null
-    const success = await syncToCloud({ settings, stats, game: gameSnapshot })
-    if (success) {
-      showToast('同步成功')
+    const result = await syncToCloud({ settings, stats, game: gameSnapshot })
+    if (result.success) {
+      const nasLabel = result.nasSuccess ? '局域网 ✓' : '局域网 ✗'
+      const supabaseLabel = result.supabaseSuccess ? '云端 ✓' : '云端 ✗'
+      showToast(`同步成功 (${nasLabel} ${supabaseLabel})`)
     } else {
-      showToast('同步失败')
+      enqueuePendingSync({
+        settings,
+        stats,
+        game: gameSnapshot,
+        syncedAt: Date.now(),
+        version: parseInt(localStorage.getItem('sudoku.syncVersion.v1') || '0', 10) + 1,
+      })
+      showToast('同步失败，已加入重试队列')
     }
   }, [settings, stats, game, showToast])
 
@@ -86,7 +96,17 @@ export default function App() {
     const handleVisibilityChange = () => {
       if (document.hidden) {
         const gameSnapshot = game ? toSnapshot(game) : null
-        syncToCloud({ settings, stats, game: gameSnapshot }).catch(() => {})
+        syncToCloud({ settings, stats, game: gameSnapshot }).then((result) => {
+          if (!result.success) {
+            enqueuePendingSync({
+              settings,
+              stats,
+              game: gameSnapshot,
+              syncedAt: Date.now(),
+              version: parseInt(localStorage.getItem('sudoku.syncVersion.v1') || '0', 10) + 1,
+            })
+          }
+        }).catch(() => {})
       }
     }
     document.addEventListener('visibilitychange', handleVisibilityChange)
@@ -111,6 +131,8 @@ export default function App() {
       }
     }
     initSync()
+    startRetryScheduler()
+    return () => stopRetryScheduler()
   }, [settings.cloudSync])
 
   const navigateTo = useCallback((next: Screen, dir: ScreenDirection = 'forward') => {

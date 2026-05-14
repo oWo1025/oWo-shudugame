@@ -3,7 +3,8 @@ import type { KeyboardSide, Mode, Settings, Theme, InputMode } from '../types'
 import { Button, Segmented, Toggle } from '../ui'
 import { playSound } from '../sound'
 import { CloudSyncSetup } from './CloudSyncSetup'
-import { isCloudConfigured, getStoredAuth, setStoredAuth, getLastSyncAt } from '../cloudSync'
+import { isCloudConfigured, getStoredAuth, setStoredAuth, getLastSyncAt, getBackendStatus } from '../cloudSync'
+import { hasPendingSync, retryNow } from '../syncQueue'
 
 export const SettingsScreen = ({
   value,
@@ -25,6 +26,11 @@ export const SettingsScreen = ({
   const set = <K extends keyof Settings>(k: K, v: Settings[K]) => onChange({ ...value, [k]: v })
 
   const [showCloudSetup, setShowCloudSetup] = useState(false)
+  const [checkingStatus, setCheckingStatus] = useState(false)
+  const [backendStatus, setBackendStatus] = useState<{
+    nasConfigured: boolean; nasReachable: boolean; nasError?: string
+    supabaseConfigured: boolean; supabaseReachable: boolean; supabaseError?: string
+  } | null>(null)
   const btnClick = () => playSound(value.sound, 'click')
 
   const cloudConfigured = isCloudConfigured()
@@ -74,6 +80,25 @@ export const SettingsScreen = ({
     setStoredAuth({ nickname, pin })
     setShowCloudSetup(false)
     set('cloudSync', true)
+  }
+
+  const checkBackendStatus = async () => {
+    setCheckingStatus(true)
+    try {
+      const status = await getBackendStatus()
+      setBackendStatus(status)
+    } catch {
+      setBackendStatus(null)
+    }
+    setCheckingStatus(false)
+  }
+
+  const pendingSync = hasPendingSync()
+  const statusDot = (reachable: boolean | undefined, configured: boolean | undefined) => {
+    if (!configured) return <span style={{ color: 'var(--muted)', fontSize: 12 }}>未配置</span>
+    if (reachable === undefined) return <span style={{ color: 'var(--muted)', fontSize: 12 }}>未检测</span>
+    if (reachable) return <span style={{ color: '#22c55e', fontSize: 12 }}>● 正常</span>
+    return <span style={{ color: '#ef4444', fontSize: 12 }}>● 不可达</span>
   }
 
   return (
@@ -173,9 +198,26 @@ export const SettingsScreen = ({
                   ⚠️ 云同步服务未配置，请联系开发者
                 </div>
               ) : !hasAuth ? (
-                <Button onClick={() => { btnClick(); setShowCloudSetup(true) }}>
-                  设置同步身份
-                </Button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <Button onClick={() => { btnClick(); setShowCloudSetup(true) }}>
+                    设置同步身份
+                  </Button>
+                  <Button onClick={() => { btnClick(); checkBackendStatus() }} disabled={checkingStatus}>
+                    {checkingStatus ? '检测中...' : '检测后端连接'}
+                  </Button>
+                  {backendStatus && (
+                    <div style={{ fontSize: 12, display: 'flex', flexDirection: 'column', gap: 4, padding: '8px', background: 'var(--bg)', borderRadius: 6 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>局域网</span>
+                        {statusDot(backendStatus.nasReachable, backendStatus.nasConfigured)}
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>云端</span>
+                        {statusDot(backendStatus.supabaseReachable, backendStatus.supabaseConfigured)}
+                      </div>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -188,6 +230,56 @@ export const SettingsScreen = ({
                       </span>
                     )}
                   </div>
+                  <Button onClick={() => { btnClick(); checkBackendStatus() }} disabled={checkingStatus}>
+                    {checkingStatus ? '检测中...' : '检测后端连接'}
+                  </Button>
+                  {backendStatus && (
+                    <div style={{ fontSize: 12, display: 'flex', flexDirection: 'column', gap: 4, padding: '8px', background: 'var(--bg)', borderRadius: 6 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>局域网</span>
+                        {statusDot(backendStatus.nasReachable, backendStatus.nasConfigured)}
+                      </div>
+                      {backendStatus.nasError && (
+                        <div style={{ color: '#ef4444', fontSize: 11, paddingLeft: 8, whiteSpace: 'pre-line' }}>{backendStatus.nasError}</div>
+                      )}
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>云端</span>
+                        {statusDot(backendStatus.supabaseReachable, backendStatus.supabaseConfigured)}
+                      </div>
+                      {backendStatus.supabaseError && (
+                        <div style={{ color: '#ef4444', fontSize: 11, paddingLeft: 8, whiteSpace: 'pre-line' }}>{backendStatus.supabaseError}</div>
+                      )}
+                    </div>
+                  )}
+                  {pendingSync && (
+                    <div style={{
+                      fontSize: 12,
+                      color: '#856404',
+                      padding: '6px 8px',
+                      background: '#fff3cd',
+                      borderRadius: 6,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}>
+                      <span>⏳ 有数据等待同步</span>
+                      <button
+                        type="button"
+                        onClick={() => { btnClick(); retryNow() }}
+                        style={{
+                          fontSize: 11,
+                          padding: '2px 8px',
+                          border: 'none',
+                          borderRadius: 4,
+                          background: '#f0ad4e',
+                          color: '#fff',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        立即重试
+                      </button>
+                    </div>
+                  )}
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <Button onClick={() => { btnClick(); onSyncNow?.() }} wide>
                       立即同步
