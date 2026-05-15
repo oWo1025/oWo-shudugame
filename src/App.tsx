@@ -69,9 +69,7 @@ export default function App() {
     const gameSnapshot = game ? toSnapshot(game) : null
     const result = await syncToCloud({ settings, stats, game: gameSnapshot })
     if (result.success) {
-      const nasLabel = result.nasSuccess ? '局域网 ✓' : '局域网 ✗'
-      const supabaseLabel = result.supabaseSuccess ? '云端 ✓' : '云端 ✗'
-      showToast(`同步成功 (${nasLabel} ${supabaseLabel})`)
+      showToast('同步成功 ☁️')
     } else {
       enqueuePendingSync({
         settings,

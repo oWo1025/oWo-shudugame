@@ -17,6 +17,15 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
+  server: {
+    proxy: {
+      '/api/nas': {
+        target: NAS_URL || 'http://192.168.31.175:5007',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/nas/, ''),
+      },
+    },
+  },
   plugins: [
     changelogPlugin(),
     react(),

@@ -1,11 +1,5 @@
 import type { CloudSyncAuth, CloudSyncData, GameSnapshot, Settings, Stats } from './types'
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
-import {
-  isNasConfigured,
-  syncToNas as uploadToNas,
-  syncFromNas as fetchFromNas,
-  testNasConnection,
-} from './nasSync'
 
 const KEY_CLOUD_AUTH = 'sudoku.cloudAuth.v1'
 const KEY_LAST_SYNC = 'sudoku.lastSync.v1'
@@ -41,7 +35,7 @@ export const isSupabaseConfigured = (): boolean => {
 }
 
 export const isCloudConfigured = (): boolean => {
-  return isSupabaseConfigured() || isNasConfigured()
+  return isSupabaseConfigured()
 }
 
 export const getStoredAuth = (): CloudSyncAuth | null => {
@@ -123,9 +117,9 @@ export const syncToCloud = async (data: {
   settings: Settings
   stats: Stats
   game: GameSnapshot | null
-}): Promise<{ success: boolean; nasSuccess: boolean; supabaseSuccess: boolean }> => {
+}): Promise<{ success: boolean }> => {
   const auth = getStoredAuth()
-  if (!auth) return { success: false, nasSuccess: false, supabaseSuccess: false }
+  if (!auth) return { success: false }
 
   const currentVersion = parseInt(localStorage.getItem(KEY_SYNC_VERSION) || '0', 10)
   const newVersion = currentVersion + 1
@@ -138,40 +132,22 @@ export const syncToCloud = async (data: {
     version: newVersion,
   }
 
-  const results = await Promise.allSettled([
-    uploadToNas(syncData, auth),
-    syncToSupabase(syncData, auth),
-  ])
-
-  const nasSuccess = results[0].status === 'fulfilled' ? results[0].value : false
-  const supabaseSuccess = results[1].status === 'fulfilled' ? results[1].value : false
-  const success = nasSuccess || supabaseSuccess
+  const supabaseSuccess = await syncToSupabase(syncData, auth)
+  const success = supabaseSuccess
 
   if (success) {
     localStorage.setItem(KEY_LAST_SYNC, Date.now().toString())
     localStorage.setItem(KEY_SYNC_VERSION, newVersion.toString())
   }
 
-  return { success, nasSuccess, supabaseSuccess }
+  return { success }
 }
 
 export const syncFromCloud = async (): Promise<CloudSyncData | null> => {
   const auth = getStoredAuth()
   if (!auth) return null
 
-  const results = await Promise.allSettled([
-    fetchFromNas(auth),
-    syncFromSupabase(auth),
-  ])
-
-  const nasData = results[0].status === 'fulfilled' ? results[0].value : null
-  const supabaseData = results[1].status === 'fulfilled' ? results[1].value : null
-
-  if (!nasData && !supabaseData) return null
-  if (!nasData) return supabaseData
-  if (!supabaseData) return nasData
-
-  return nasData.version >= supabaseData.version ? nasData : supabaseData
+  return syncFromSupabase(auth)
 }
 
 export const testSupabaseConnection = async (): Promise<{ success: boolean; error?: string }> => {
@@ -185,35 +161,16 @@ export const testSupabaseConnection = async (): Promise<{ success: boolean; erro
   }
 }
 
-export const getBackendStatus = async (): Promise<{
-  nasConfigured: boolean
-  nasReachable: boolean
-  nasError?: string
-  supabaseConfigured: boolean
-  supabaseReachable: boolean
-  supabaseError?: string
+export const getCloudStatus = async (): Promise<{
+  configured: boolean
+  reachable: boolean
+  error?: string
 }> => {
-  const nasConfigured = isNasConfigured()
-  const supabaseConfigured = isSupabaseConfigured()
+  const configured = isSupabaseConfigured()
+  if (!configured) return { configured: false, reachable: false }
 
-  let nasReachable = false
-  let nasError: string | undefined
-  let supabaseReachable = false
-  let supabaseError: string | undefined
-
-  if (nasConfigured) {
-    const result = await testNasConnection()
-    nasReachable = result.success
-    nasError = result.error
-  }
-
-  if (supabaseConfigured) {
-    const result = await testSupabaseConnection()
-    supabaseReachable = result.success
-    supabaseError = result.error
-  }
-
-  return { nasConfigured, nasReachable, nasError, supabaseConfigured, supabaseReachable, supabaseError }
+  const result = await testSupabaseConnection()
+  return { configured: true, reachable: result.success, error: result.error }
 }
 
 export const getLastSyncAt = (): number | null => {

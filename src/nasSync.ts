@@ -50,13 +50,26 @@ const buildAuthHeader = (username: string, password: string): string => {
   return 'Basic ' + btoa(`${username}:${password}`)
 }
 
+const resolveUrl = (filePath: string): string => {
+  const config = nasEnvConfig
+  if (!config) return ''
+
+  const nasUrl = config.serverUrl.replace(/\/$/, '')
+
+  if (import.meta.env.DEV) {
+    return `/api/nas${filePath}`
+  }
+
+  return `${nasUrl}${filePath}`
+}
+
 export const syncToNas = async (data: CloudSyncData, auth: CloudSyncAuth): Promise<boolean> => {
   const config = nasEnvConfig
   if (!config) return false
 
   const fileName = getDataFileName(auth)
   const filePath = config.path.endsWith('/') ? config.path + fileName : `${config.path}/${fileName}`
-  const url = `${config.serverUrl.replace(/\/$/, '')}${filePath}`
+  const url = resolveUrl(filePath)
 
   try {
     const response = await fetch(url, {
@@ -88,7 +101,7 @@ export const syncFromNas = async (auth: CloudSyncAuth): Promise<CloudSyncData | 
 
   const fileName = getDataFileName(auth)
   const filePath = config.path.endsWith('/') ? config.path + fileName : `${config.path}/${fileName}`
-  const url = `${config.serverUrl.replace(/\/$/, '')}${filePath}`
+  const url = resolveUrl(filePath)
 
   try {
     const response = await fetch(url, {
@@ -117,10 +130,9 @@ export const syncFromNas = async (auth: CloudSyncAuth): Promise<CloudSyncData | 
 
 export const testNasConnection = async (): Promise<{ success: boolean; error?: string }> => {
   const config = nasEnvConfig
-  if (!config) return { success: false, error: '服务器N未配置' }
+  if (!config) return { success: false, error: 'NAS未配置' }
 
-  const baseUrl = config.serverUrl.replace(/\/$/, '')
-  const testUrl = `${baseUrl}/${config.path.replace(/^\//, '')}`
+  const testUrl = resolveUrl(config.path)
 
   try {
     const response = await fetch(testUrl, {
@@ -141,7 +153,7 @@ export const testNasConnection = async (): Promise<{ success: boolean; error?: s
     }
 
     if (response.status === 404) {
-      return { success: false, error: `路径 ${config.path} 不存在，请在服务器N上创建此文件夹` }
+      return { success: false, error: `路径 ${config.path} 不存在，请在NAS上创建此文件夹` }
     }
 
     return { success: false, error: `服务器返回 ${response.status}` }
@@ -150,7 +162,7 @@ export const testNasConnection = async (): Promise<{ success: boolean; error?: s
     if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
       return {
         success: false,
-        error: `无法访问`,
+        error: '无法访问NAS，请确认在同一局域网且WebDAV服务已启动',
       }
     }
     return { success: false, error: `请求异常: ${msg}` }

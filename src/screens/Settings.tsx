@@ -3,7 +3,7 @@ import type { KeyboardSide, Mode, Settings, Theme, InputMode } from '../types'
 import { Button, Segmented, Toggle } from '../ui'
 import { playSound } from '../sound'
 import { CloudSyncSetup } from './CloudSyncSetup'
-import { isCloudConfigured, getStoredAuth, setStoredAuth, getLastSyncAt, getBackendStatus } from '../cloudSync'
+import { isCloudConfigured, getStoredAuth, setStoredAuth, getLastSyncAt, getCloudStatus } from '../cloudSync'
 import { hasPendingSync, retryNow } from '../syncQueue'
 
 export const SettingsScreen = ({
@@ -27,9 +27,8 @@ export const SettingsScreen = ({
 
   const [showCloudSetup, setShowCloudSetup] = useState(false)
   const [checkingStatus, setCheckingStatus] = useState(false)
-  const [backendStatus, setBackendStatus] = useState<{
-    nasConfigured: boolean; nasReachable: boolean; nasError?: string
-    supabaseConfigured: boolean; supabaseReachable: boolean; supabaseError?: string
+  const [cloudStatus, setCloudStatus] = useState<{
+    configured: boolean; reachable: boolean; error?: string
   } | null>(null)
   const btnClick = () => playSound(value.sound, 'click')
 
@@ -82,35 +81,30 @@ export const SettingsScreen = ({
     set('cloudSync', true)
   }
 
-  const checkBackendStatus = async () => {
+  const checkCloudStatus = async () => {
     setCheckingStatus(true)
     try {
-      const status = await getBackendStatus()
-      setBackendStatus(status)
+      const status = await getCloudStatus()
+      setCloudStatus(status)
     } catch {
-      setBackendStatus(null)
+      setCloudStatus(null)
     }
     setCheckingStatus(false)
   }
 
   const pendingSync = hasPendingSync()
-  const statusDot = (reachable: boolean | undefined, configured: boolean | undefined) => {
-    if (!configured) return <span style={{ color: 'var(--muted)', fontSize: 12 }}>未配置</span>
-    if (reachable === undefined) return <span style={{ color: 'var(--muted)', fontSize: 12 }}>未检测</span>
-    if (reachable) return <span style={{ color: '#22c55e', fontSize: 12 }}>● 正常</span>
-    return <span style={{ color: '#ef4444', fontSize: 12 }}>● 不可达</span>
-  }
 
   return (
     <div className="app">
       <div className="topbar">
         <Button onClick={() => { btnClick(); onBack() }}>返回</Button>
-        <div className="title">设置</div>
+        <div className="title pageTitleGradient">设置</div>
         <div />
       </div>
 
       <div className="card">
         <div className="cardHeader">
+          <span className="cardHeaderIcon">🎨</span>
           <span className="muted">显示</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -137,6 +131,7 @@ export const SettingsScreen = ({
 
       <div className="card">
         <div className="cardHeader">
+          <span className="cardHeaderIcon">⌨️</span>
           <span className="muted">输入</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -155,6 +150,7 @@ export const SettingsScreen = ({
 
       <div className="card">
         <div className="cardHeader">
+          <span className="cardHeaderIcon">🛠️</span>
           <span className="muted">辅助</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -202,19 +198,24 @@ export const SettingsScreen = ({
                   <Button onClick={() => { btnClick(); setShowCloudSetup(true) }}>
                     设置同步身份
                   </Button>
-                  <Button onClick={() => { btnClick(); checkBackendStatus() }} disabled={checkingStatus}>
-                    {checkingStatus ? '检测中...' : '检测后端连接'}
+                  <Button onClick={() => { btnClick(); checkCloudStatus() }} disabled={checkingStatus}>
+                    {checkingStatus ? '检测中...' : '检测云端连接'}
                   </Button>
-                  {backendStatus && (
+                  {cloudStatus && (
                     <div style={{ fontSize: 12, display: 'flex', flexDirection: 'column', gap: 4, padding: '8px', background: 'var(--bg)', borderRadius: 6 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>局域网</span>
-                        {statusDot(backendStatus.nasReachable, backendStatus.nasConfigured)}
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <span>云端</span>
-                        {statusDot(backendStatus.supabaseReachable, backendStatus.supabaseConfigured)}
+                        {!cloudStatus.configured ? (
+                          <span style={{ color: 'var(--muted)' }}>未配置</span>
+                        ) : cloudStatus.reachable ? (
+                          <span style={{ color: '#22c55e' }}>● 正常</span>
+                        ) : (
+                          <span style={{ color: '#ef4444' }}>● 不可达</span>
+                        )}
                       </div>
+                      {cloudStatus.error && (
+                        <div style={{ color: '#ef4444', fontSize: 11, paddingLeft: 8 }}>{cloudStatus.error}</div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -230,24 +231,23 @@ export const SettingsScreen = ({
                       </span>
                     )}
                   </div>
-                  <Button onClick={() => { btnClick(); checkBackendStatus() }} disabled={checkingStatus}>
-                    {checkingStatus ? '检测中...' : '检测后端连接'}
+                  <Button onClick={() => { btnClick(); checkCloudStatus() }} disabled={checkingStatus}>
+                    {checkingStatus ? '检测中...' : '检测云端连接'}
                   </Button>
-                  {backendStatus && (
+                  {cloudStatus && (
                     <div style={{ fontSize: 12, display: 'flex', flexDirection: 'column', gap: 4, padding: '8px', background: 'var(--bg)', borderRadius: 6 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>局域网</span>
-                        {statusDot(backendStatus.nasReachable, backendStatus.nasConfigured)}
-                      </div>
-                      {backendStatus.nasError && (
-                        <div style={{ color: '#ef4444', fontSize: 11, paddingLeft: 8, whiteSpace: 'pre-line' }}>{backendStatus.nasError}</div>
-                      )}
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <span>云端</span>
-                        {statusDot(backendStatus.supabaseReachable, backendStatus.supabaseConfigured)}
+                        {!cloudStatus.configured ? (
+                          <span style={{ color: 'var(--muted)' }}>未配置</span>
+                        ) : cloudStatus.reachable ? (
+                          <span style={{ color: '#22c55e' }}>● 正常</span>
+                        ) : (
+                          <span style={{ color: '#ef4444' }}>● 不可达</span>
+                        )}
                       </div>
-                      {backendStatus.supabaseError && (
-                        <div style={{ color: '#ef4444', fontSize: 11, paddingLeft: 8, whiteSpace: 'pre-line' }}>{backendStatus.supabaseError}</div>
+                      {cloudStatus.error && (
+                        <div style={{ color: '#ef4444', fontSize: 11, paddingLeft: 8 }}>{cloudStatus.error}</div>
                       )}
                     </div>
                   )}

@@ -30,8 +30,8 @@ const diffStars = (d: Difficulty) => {
 const homeLogoDigits = [5, 3, 7, 6, 1, 9, 2, 4, 8]
 
 const menuItems = [
-  { id: 'stats', icon: '📊', label: '统计', color: '#6c5ce7' },
-  { id: 'settings', icon: '⚙️', label: '设置', color: '#00b894' },
+  { id: 'stats', icon: '📊', label: '统计', color: '#6c5ce7', gradient: 'linear-gradient(135deg, #00b894, #55efc4)', symbol: '▤' },
+  { id: 'settings', icon: '⚙️', label: '设置', color: '#00b894', gradient: 'linear-gradient(135deg, #636e72, #b2bec3)', symbol: '⚙' },
 ]
 
 export const Home = ({
@@ -125,7 +125,7 @@ export const Home = ({
           onClick={() => { onClick(); onContinue() }}
           onMouseEnter={onHover}
         >
-          <span className="menuCardIcon">▶️</span>
+          <span className="menuCardIconWrap" style={{ background: 'linear-gradient(135deg, #20c997, #38d9a9)' }}><span className="menuCardIconInner">▶</span></span>
           <span className="menuCardLabel">继续游戏</span>
           <span className="menuCardArrow">→</span>
         </button>
@@ -137,7 +137,7 @@ export const Home = ({
           onClick={() => handleCategoryClick('newGame')}
           onMouseEnter={onHover}
         >
-          <span className="menuCardIcon">🎮</span>
+          <span className="menuCardIconWrap" style={{ background: 'linear-gradient(135deg, #6c5ce7, #a29bfe)' }}><span className="menuCardIconInner">🎮</span></span>
           <span className="menuCardLabel">新游戏</span>
         </button>
         <button
@@ -145,7 +145,7 @@ export const Home = ({
           onClick={() => handleCategoryClick('daily')}
           onMouseEnter={onHover}
         >
-          <span className="menuCardIcon">📅</span>
+          <span className="menuCardIconWrap" style={{ background: 'linear-gradient(135deg, #fd9644, #fed330)' }}><span className="menuCardIconInner">📅</span></span>
           <span className="menuCardLabel">每日挑战</span>
         </button>
       </div>
@@ -161,7 +161,7 @@ export const Home = ({
           }}
           onMouseEnter={onHover}
         >
-          <span className="menuCardIcon">{item.icon}</span>
+          <span className="menuCardIconWrap" style={{ background: item.gradient }}><span className="menuCardIconInner">{item.symbol}</span></span>
           <span className="menuCardLabel">{item.label}</span>
           <span className="menuCardArrow">→</span>
         </button>
